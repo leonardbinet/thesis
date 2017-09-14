@@ -1,0 +1,24 @@
+
+
+\subsubsection{Comparaison des scores - Mean Average Precision}
+
+\underline{Calcul des scores}
+\\ Afin d'avoir une estimation de la précision des valeurs de score, nous avons tiré aléatoirement 1000 recommandations de produit pour chaque fichier de résultat, et ce 50 fois. Sur chacun des tirages, nous avons calculé l'Average Precision sur les 5 produits les plus similaires. Nous avons de ce fait un ensemble de 50 scores pour chaque modèle, ce qui permet d'estimer leur distribution.
+
+Les résultats sont présentés sous forme de diagramme en boîte.
+
+\underline{Résultats : ensemble des modèles}
+
+\\ \includegraphics[scale=0.4]{./images/boxplots/models_scores_for_all_products.png}
+\\ \includegraphics[scale=0.4]{./images/boxplots/models_scores_for_aspirateur.png}
+\\ \includegraphics[scale=0.4]{./images/boxplots/models_scores_for_cafetiere.png}
+\\ \includegraphics[scale=0.4]{./images/boxplots/models_scores_for_tablette.png}
+\\ \includegraphics[scale=0.4]{./images/boxplots/models_scores_for_telephone.png}
+
+\underline{Résultats : meilleurs modèles}
+
+\\ \includegraphics[scale=0.4]{./images/boxplots/lsa 50.png}
+\\ \includegraphics[scale=0.4]{./images/boxplots/plsi u 150.png}
+\\ \includegraphics[scale=0.4]{./images/boxplots/plsi q 75.png}
+\\ \includegraphics[scale=0.4]{./images/boxplots/tfidf 0.png}
+

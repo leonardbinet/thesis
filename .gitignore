@@ -1,0 +1,23 @@
+# at least
+*.aux
+*.pdf
+!images/*.pdf
+!rapport.pdf
+*.ps
+*.log
+*.dvi
+*.tex~
+
+# then
+*.fls
+*.fdb_latexmk
+*.blg
+*.glsdefs
+*.ist
+*.gz
+*.out
+*.toc
+*.glo
+*.log.txt
+*.synctex
+*.bbl

@@ -1,0 +1,155 @@
+% *****************************************************************************
+%
+% Author: Léonard Binet
+%
+% Professional thesis report.
+%
+% *****************************************************************************
+
+
+\documentclass[a4paper, 12pt]{report}
+
+\usepackage{geometry}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+%\usepackage{graphicx}
+%\usepackage[pdftex]{graphicx}
+\usepackage{setspace}
+\usepackage[pdftex]{hyperref}
+\usepackage{amsmath,amsthm,amsfonts,amssymb}
+\usepackage[T1]{fontenc}
+\usepackage{multirow}
+\usepackage{svg}
+\usepackage{float}
+\usepackage{textcomp}
+\usepackage{fullpage}
+\usepackage{fancyvrb}
+\usepackage{fancyhdr}
+\usepackage{lmodern}
+\usepackage{sistyle}
+% \usepackage{color}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage[justification=centering, font={small}]{caption}
+\usepackage{verbdef}
+\usepackage{dsfont}
+\usepackage[normalem]{ulem}
+\usepackage{amssymb} % for mathbb
+
+% for diagrams
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows, positioning}
+
+% force footnotes to be on the bottom
+\usepackage[bottom]{footmisc}
+
+% for tables
+\usepackage{booktabs}
+\usepackage{tabularx,ragged2e}
+\newcolumntype{L}{>{\arraybackslash}X}
+
+% for pseudocode
+\usepackage{algorithm}
+\usepackage{algorithmic}
+% \usepackage[noend]{algpseudocode}
+
+% bigger operators
+\usepackage{relsize}
+
+% for cases
+\makeatletter
+\renewcommand{\env@cases}[1][@{}l@{\quad}l@{}]{%
+  \let\@ifnextchar\new@ifnextchar
+  \left\lbrace
+  \def\arraystretch{1.2}%
+  \array{#1}%
+}
+\makeatother
+
+% Remove indent of 2nd paragraph in sections, subsections, etc.
+% Uncomment to enable
+\setlength{\parindent}{0pt}
+
+\newcommand\Framing[1]
+  { \hspace{10mm}
+     \framebox{#1}\hspace{10mm}}
+
+% nested bullet lists
+\renewcommand{\labelitemii}{$\star$}
+
+% -----------------------------------------------------------------
+%                              Tools
+% -----------------------------------------------------------------
+
+% Adding source to figures
+\newcommand*{\captionsource}[2]{%
+  \caption[{#1}]{%
+    #1%
+    \\\hspace{\linewidth}%
+    \textbf{Source:} #2%
+  }%
+}
+% Format multiline text in subscripts
+\newcommand\multiLine[1]{\text{\scriptsize\tabular[t]{@{}l@{}}#1\endtabular}}
+
+\newcommand{\reporttitle}{Product Attribute prediction}     % Titre
+\newcommand{\reportauthor}{} % Auteur
+\newcommand{\reportsubject}{Professional Thesis} % Sujet
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+\setlength{\parskip}{1ex} % Espace entre les paragraphes
+
+% indent a paragraph
+\newenvironment{myindentpar}[1]%
+ {\begin{list}{}%
+         {\setlength{\leftmargin}{#1}}%
+         \item[]%
+ }
+ {\end{list}}
+
+% -----------------------------------------------------------------
+
+\geometry{top=2.5cm,left=2.6cm,right=2.6cm,bottom=2.5cm,headsep=1cm}
+\hypersetup{pdfborder={0 0 0},
+colorlinks,urlcolor=blue,linkcolor=blue,citecolor=blue,filecolor=blue,
+pdftitle=
+}
+
+
+\begin{document}
+
+\pagestyle{fancy}
+\fancyhead[C]{Léonard\, Binet}
+\fancyhead[R]{Telecom ParisTech}
+\fancyhead[L]{Alkemics}
+
+\cfoot{\thepage}
+\setlength\headheight{15pt}
+
+\include{title}
+\cleardoublepage   % Dans le cas du recto verso, ajoute une page blanche si besoin
+\tableofcontents{} % Table des matières
+\sloppy            % Justification moins stricte : des mots ne dépasseront pas des paragraphes
+\cleardoublepage
+% \include{abstract}
+% \cleardoublepage
+\include{part1}
+\cleardoublepage
+\include{part2}
+\cleardoublepage
+\include{part3}
+\cleardoublepage
+\include{part4}
+\cleardoublepage
+\include{part5}
+\cleardoublepage
+\include{concl}
+\cleardoublepage
+\include{appendix}
+\cleardoublepage
+
+\bibliographystyle{plain}
+\bibliography{biblio}
+
+\end{document}
