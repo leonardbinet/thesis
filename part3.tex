@@ -359,10 +359,10 @@ Given a test input x, we want our hypothesis to estimate the probability that $P
 \begin{align} 
 	H_\theta(x) 
 		&= \begin{bmatrix} 
-			h_\theta^{(1)}(x) \\ 
-			h_\theta^{(2)}(x) \\ 
+			h_{\theta^{(1)}}(x) \\ 
+			h_{\theta^{(2)}}(x) \\ 
 			\vdots \\ 
-			h_\theta^{(K)}(x) 
+			h_{\theta^{(K)}}(x) 
 		\end{bmatrix} \\
 		&=
 		\begin{bmatrix} 
@@ -373,7 +373,10 @@ Given a test input x, we want our hypothesis to estimate the probability that $P
 		\end{bmatrix} \\
 		&= 
 		\begin{bmatrix} 
-			\frac{1}{1 + \exp(-\theta^{(1)\top} x)} \exp(\theta^{(1)\top} x ) \\ \frac{1}{1 + \exp(-\theta^{(2)\top} x)}\exp(\theta^{(2)\top} x ) \\ \vdots \\ \frac{1}{1 + \exp(-\theta^{(K)\top} x)}\exp(\theta^{(K)\top} x ) \\ 
+			\frac{1}{1 + \exp(-\theta^{(1)\top} x)} \exp(\theta^{(1)\top} x ) \\ 
+			\frac{1}{1 + \exp(-\theta^{(2)\top} x)}\exp(\theta^{(2)\top} x ) \\ 
+			\vdots \\ 
+			\frac{1}{1 + \exp(-\theta^{(K)\top} x)}\exp(\theta^{(K)\top} x ) \\ 
 		\end{bmatrix} 
 \end{align}
 
@@ -409,28 +412,15 @@ Making the assumptions that all classes are independent (which is in pratice usu
 			  &= \prod_{i=1}^m \prod_{j=1}^K P(Y_j=y_j^{(i)} | x^{(i)}) 
 \end{align}
 
-Remembering that in binary case $k \in \{0,1\}$:
-\begin{align}
-	P(Y=k|x) = (h_\theta(x))^k \times (1 - h_\theta(x))^{(1-k)}
-\end{align}
-Then: $\forall j \in [1, K]$, $k \in \{0,1\}$:
-\begin{align}
-	P(Y_j=k|x) = (h_\theta^{(j)}(x))^k \times (1 - h_\theta^{(j)}(x))^{(1-k)}
-\end{align}
-
-
-So, bringing it together:
-\begin{align}
-	L(\theta) &= \prod_{i=1}^m \prod_{j=1}^K P(Y_j=y_j^{(i)} | x^{(i)}) \\
-	&= \prod_{i=1}^m \prod_{j=1}^K (h_\theta^{(j)}(x))^{y_j^{(i)}} \times (1 - h_\theta^{(j)}(x))^{(1-y_j^{(i)})}
-\end{align}
-
-
-Another way to write it is: with $\mathcal{P}_i$ the set of indices among K classes which are positives among sample $i$, and $\mathcal{N}_i$ the negatives set: ($|\mathcal{P}_i| + |\mathcal{N}_i|$ = K)
+With $\mathcal{P}_i$ the set of indices among K classes which are positives among sample $i$, and $\mathcal{N}_i$ the negatives set: ($|\mathcal{P}_i| + |\mathcal{N}_i|$ = K)
 
 \begin{align}
 	L(\theta) &= \prod_{i=1}^m \prod_{j=1}^K P(Y_j=y_j^{(i)} | x^{(i)}) \\
-			  &= \prod_{i=1}^m \left[ \prod_{j \in \mathcal{P}_i } P(Y_j=1 | x^{(i)}) \prod_{l \in \mathcal{N}_i} P(Y_j=0 | x^{(i)}) \right]
+			  &= \prod_{i=1}^m \left[ \prod_{j \in \mathcal{P}_i } P(Y_j=1 | x^{(i)}) \times \prod_{l \in \mathcal{N}_i} P(Y_l=0 | x^{(i)}) \right] \\
+			  &= \prod_{i=1}^m  \prod_{j \in \mathcal{P}_i } P(Y_j=1 | x^{(i)}) \prod_{l \in \mathcal{N}_i} P(Y_l=0 | x^{(i)})  \\
+			  \vdots\\
+			  &= \prod_{i=1}^m \left[ \prod_{j \in \mathcal{P}_i } h_{\theta^{(j)}(x)} \prod_{l \in \mathcal{N}_i} (1 - h_{\theta^{(l)}(x))} \right] \\
+			  &= \prod_{i=1}^m \left[ \prod_{j \in \mathcal{P}_i } \frac{1}{1 + \exp(-\theta^{(j)\top} x)} \exp(\theta^{(j)\top} x ) \prod_{l \in \mathcal{N}_i} P(Y_j=0 | x^{(i)}) \right]
 \end{align}
 
 
@@ -439,8 +429,8 @@ Another way to write it is: with $\mathcal{P}_i$ the set of indices among K clas
 It will be easier to maximize the log likelihood:
 \begin{align}
 	l(\theta) &= \log L(\theta) \\
-			  &= \log \left( \prod_{i=1}^m P(Y=y^{(i)} | x^{(i)}) \right) \\
-			  &= \sum_{i=1}^m \left( y^{(i)}\log h_\theta(x^{(i)}) + (1-y^{(i)})\log (1 - h_\theta(x^{(i)})) \right)
+			  &= \log \left( \prod_{i=1}^m  \prod_{j \in \mathcal{P}_i } P(Y_j=1 | x^{(i)}) \prod_{l \in \mathcal{N}_i} P(Y_l=0 | x^{(i)}) \right) \\
+			  &= \sum_{i=1}^m \left( \sum_{j \in \mathcal{P}_i } \log P(Y_j=1 | x^{(i)}) + \sum_{l \in \mathcal{N}_i} \log P(Y_l=0 | x^{(i)})  \right)
 \end{align}
 
 It is the same as minimizing the following (cross entropy loss):
