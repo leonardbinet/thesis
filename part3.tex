@@ -45,6 +45,10 @@
 \1 $ \mathcal{D}_m = \{(x^{(i)}, y^{(i)}), i \in 1,m\} \in (\mathcal{X},\mathcal{Y})^m$ a learning set containing $m$ samples $iid$ and from P.\\
 \end{outline}
 
+Note:
+For the $i^{th}$ sample, $x^{(i)}$ $y^{(i)}$, which are vectors, we'll respectively denote the $j^{th}$ component as follow: $x_j^{(i)}$ and $y_j^{(i)}$
+
+
 \subsection*{Notations for multi-labeled samples}
 
 Everything is the same except that labels are no longer scalars but vectors, with $K = |\mathcal{Y}|$:
@@ -75,17 +79,25 @@ Everything is the same except that labels are no longer scalars but vectors, wit
 \label{sec:workflow}
 
 
-We want to predict the value of $y^{(i)}$ for the i‘th example $x^{(i)}$ using a function $y = h_\theta(x) $ with binary-valued labels $\left(y^{(i)} \in \{0,1\}\right)$. We want our hypothesis class to try to predict the probability that a given example belongs to the “1” class versus the probability that it belongs to the “0” class. Specifically, we will try to learn a function of the form:
+We want to predict the value of $y^{(i)}$ for the example $x^{(i)}$ using a function $y = h_\theta(x) $ with binary-valued labels $\left(y^{(i)} \in \{0,1\}\right)$. We want to predict the probability that a given example belongs to the “1” class versus the probability that it belongs to the “0” class. Specifically, we will try to learn a function of the form:
 
 \subsection{Model}
 \begin{align}
 	P(Y=1|X=x) &= h_\theta(x) \\
-			 &= \frac{1}{1 + \exp(-\theta^\top x)} \equiv \sigma(\theta^\top x),\\
+			   &= \frac{1}{1 + \exp(-\theta^\top x)} \\
+			   &= \sigma(\theta^\top x),\\
 	P(Y=0|X=x) &= 1 - h_\theta(x) \\
-			 &= 1 - P(Y=1|X=x).
+			   &= \sigma(-\theta^\top x)
 \end{align}
 
-The function $\sigma(z) \equiv \frac{1}{1 + \exp(-z)}$ is often called the “sigmoid” or “logistic” function – it is an S-shaped function that “squashes” the value of $\theta^\top x$ into the range [0, 1] so that we may interpret $h_\theta(x)$ as a probability. Our goal is to search for a value of $\theta$ so that the probability $P(Y=1|x) = h_\theta(x)$ is large when x belongs to the “1” class and small when x belongs to the “0” class (so that $P(Y=0|x)$ is large). 
+With:
+\begin{align}
+	\sigma(z) \equiv \frac{1}{1 + \exp(-z)}
+\end{align}
+
+the “logistic” function. It is an S-shaped function that “squashes” the value of $\theta^\top x$ into the range [0, 1] so that we may interpret $h_\theta(x)$ as a probability. 
+
+Our goal is to search for a value of $\theta$ so that the probability $P(Y=1|x) = h_\theta(x)$ is large when x belongs to the “1” class and small when x belongs to the “0” class (so that $P(Y=0|x)$ is large). 
 
 For further use, note than for $k \in \{0,1\}$:
 \begin{align}
@@ -179,13 +191,13 @@ We can then apply gradient descent to find global minimum since $J(\theta)$ is c
 \section{Multiclass case: Softmax regression}
 
 
-Softmax regression (or multinomial logistic regression) is a generalization of logistic regression to the case where we want to handle multiple classes. In logistic regression we assumed that the labels were binary: $y^{(i)} \in \{0,1\}$. We used such a classifier to distinguish between two kinds of hand-written digits. Softmax regression allows us to handle $ y^{(i)} \in \{1,\ldots,K\}$ where K is the number of classes.
+Softmax regression (or multinomial logistic regression) is a generalization of logistic regression to the case where we want to handle multiple classes. In logistic regression we assumed that the labels were binary: $y^{(i)} \in \{0,1\}$. Softmax regression allows us to handle $ y^{(i)} \in \{1,\ldots,K\}$ where K is the number of classes.
 
 In the softmax regression setting, we are interested in multi-class classification (as opposed to only binary classification), and so the label y can take on K different values, rather than only two. Thus, in our training set $\{ (x^{(1)}, y^{(1)}), \ldots, (x^{(m)}, y^{(m)}) \}$, we now have that $y^{(i)} \in \{1, 2, \ldots, K\}$. (Note that our convention will be to index the classes starting from 1, rather than from 0.) 
 
 \subsection{Model}
 
-Given a test input x, we want our hypothesis to estimate the probability that $P(Y=k | x)$ for each value of $k = 1, \ldots,$ K. I.e., we want to estimate the probability of the class label taking on each of the K different possible values. Thus, our hypothesis will output a K-dimensional vector (whose elements sum to 1) giving us our K estimated probabilities. Concretely, our hypothesis $h_{\theta}(x)$ takes the form:
+Given a test input x, we want our hypothesis to estimate the probability $P(Y=k | x)$ for each value of $k = 1, \ldots,$ K. i.e. we want to estimate the class probabilities of the K different possible labels. Thus, our hypothesis function will output multinomial distribution: a K-dimensional vector (whose elements sum to 1) giving us our K estimated probabilities. Concretely, our hypothesis $h_{\theta}(x)$ takes the form:
 
 \begin{align}
 	h_\theta(x)
@@ -223,8 +235,7 @@ With each $\theta^{(i)}$ being a vector $\in \mathbb{R}^{d}$:
 
 \subsection{Objective}
 
-We now describe the cost function that we’ll use for softmax regression. In the equation below, $\mathds{1}\{\cdot\}$ is the ”‘indicator function,”’ so that $\mathds{1}\{\hbox{a true statement}\}=1$, and $\mathds{1}\{\hbox{a false statement}\}=0$. For example, $\mathds{1}\{2+2=4\}$ evaluates to 1; whereas $\mathds{1}\{1+1=5\}$ evaluates to 0. 
-
+We now describe the cost function that we’ll use for softmax regression.
 
 For a set of training examples with multiclass labels $\{ (x^{(i)}, y^{(i)}) : i=1,\ldots,m\}$, assuming that the $m$ training examples were generated independently, we can then write down the likelihood of the parameters as:
 \begin{align}
@@ -261,7 +272,7 @@ The softmax cost function is similar, except that we now sum over the K differen
 
 We cannot solve for the minimum of $J(\theta)$ analytically, and thus as usual we’ll resort to an iterative optimization algorithm. Taking derivatives, one can show that the gradient is:
 
-\begin{align} \nabla_{\theta^{(k)}} J(\theta) = - \sum_{i=1}^{m}{ \left[ x^{(i)} \left( 1\{ y^{(i)} = k\} - P(Y^{(i)} = k | x^{(i)}; \theta) \right) \right] } \end{align}
+\begin{align} \nabla_{\theta^{(k)}} J(\theta) = - \sum_{i=1}^{m}{ \left[ x^{(i)} \left( \mathds{1} \{ y^{(i)} = k\} - P(Y^{(i)} = k | x^{(i)}; \theta) \right) \right] } \end{align}
 
 In particular, $\nabla_{\theta^{(k)}} J(\theta)$ is itself a vector, so that its j-th element is $\frac{\partial J(\theta)}{\partial \theta_{lk}}$ the partial derivative of $J(\theta)$ with respect to the j-th element of $\theta^{(k)}$.
 
@@ -329,7 +340,7 @@ One possibility is to treat each class as an independent binary problem. Our sam
 
 With $Y_{i} \in \{0, 1\}$
 
-Our sample then is not a single value but a vector of binary elements in $\mathcal{Y}$:
+Our sample then is not a single value but an indicator vector:
 
 \begin{align}
 	y = \left[
@@ -354,9 +365,9 @@ y_{i} = \left\{
 
 \subsection{Model}
 
-Given a test input x, we want our hypothesis to estimate the probability that $P(Y=y | x)$. More specifically, for each possible class, we want to estimate the probability that the class is positive. Thus, our hypothesis will output a K-dimensional vector (whose elements don't sum to 1! in opposition to softmax regression) giving us our K estimated probabilities. Concretely, our hypothesis $H_{\theta}(x)$ takes the form:
+Given a test input x, we want our hypothesis to independently estimate the probability that $P(Y=y | x)$. More specifically, for each possible class, we want to estimate the probability that the class is positive. Thus, our hypothesis will output a K-dimensional vector (whose elements don't sum to 1! in opposition to softmax regression) giving us our K estimated probabilities. Concretely, our hypothesis $H_{\theta}(x)$ takes the form:
 
-\begin{align} 
+\begin{align}
 	H_\theta(x) 
 		&= \begin{bmatrix} 
 			h_{\theta^{(1)}}(x) \\ 
@@ -364,26 +375,12 @@ Given a test input x, we want our hypothesis to estimate the probability that $P
 			\vdots \\ 
 			h_{\theta^{(K)}}(x) 
 		\end{bmatrix} \\
-		&=
-		\begin{bmatrix} 
-			P(Y_1 = 1 | x; \theta^{(1)}(x)) \\ 
-			P(Y_2 = 1 | x; \theta^{(2)}(x)) \\ 
-			\vdots \\ 
-			P(Y_K = 1 | x; \theta^{(K)}(x)) 
-		\end{bmatrix} \\
-		&= 
-		\begin{bmatrix} 
-			\frac{1}{1 + \exp(-\theta^{(1)\top} x)} \exp(\theta^{(1)\top} x ) \\ 
-			\frac{1}{1 + \exp(-\theta^{(2)\top} x)}\exp(\theta^{(2)\top} x ) \\ 
-			\vdots \\ 
-			\frac{1}{1 + \exp(-\theta^{(K)\top} x)}\exp(\theta^{(K)\top} x ) \\ 
-		\end{bmatrix} 
+	\theta &= \left[\begin{array}{cccc}| & | & | & | \\ \theta^{(1)} & \theta^{(2)} & \cdots & \theta^{(K)} \\ | & | & | & | \end{array}\right]
 \end{align}
 
 
-$\theta = \left[\begin{array}{cccc}| & | & | & | \\ \theta^{(1)} & \theta^{(2)} & \cdots & \theta^{(K)} \\ | & | & | & | \end{array}\right]$.
-
-With each $\theta^{(i)}$ being a vector $\in \mathbb{R}^{d}$:
+With each $\theta^{(i)}$ being a vector $\in \mathbb{R}^{d}$.
+For $i \in [1, K]$:
 
 \begin{align}
 	\theta^{(i)} = \left[
@@ -394,6 +391,16 @@ With each $\theta^{(i)}$ being a vector $\in \mathbb{R}^{d}$:
 			\theta_{d}^{(i)}
 		\end{array}\right]
 \end{align}
+
+
+\begin{align}
+	h_{\theta^{(i)}}(x) 
+	&= P(Y_i = 1 | x; \theta^{(i)}(x)) \\
+	&= \frac{1}{1 + \exp(-\theta^{(i)\top} x)}\\
+	&= \sigma(\theta^{(i)\top} x)
+\end{align}
+
+
 
 
 \subsection{Objective}
@@ -412,42 +419,56 @@ Making the assumptions that all classes are independent (which is in pratice usu
 			  &= \prod_{i=1}^m \prod_{j=1}^K P(Y_j=y_j^{(i)} | x^{(i)}) 
 \end{align}
 
-With $\mathcal{P}_i$ the set of indices among K classes which are positives among sample $i$, and $\mathcal{N}_i$ the negatives set: ($|\mathcal{P}_i| + |\mathcal{N}_i|$ = K)
+With $\mathcal{P}_i$ the set of indices among K classes which are positives among sample $i$, ($y_j^{(i)}=1$) and $\mathcal{N}_i$ the negatives set: ($|\mathcal{P}_i| + |\mathcal{N}_i|$ = K)
 
 \begin{align}
 	L(\theta) &= \prod_{i=1}^m \prod_{j=1}^K P(Y_j=y_j^{(i)} | x^{(i)}) \\
 			  &= \prod_{i=1}^m \left[ \prod_{j \in \mathcal{P}_i } P(Y_j=1 | x^{(i)}) \times \prod_{l \in \mathcal{N}_i} P(Y_l=0 | x^{(i)}) \right] \\
 			  &= \prod_{i=1}^m  \prod_{j \in \mathcal{P}_i } P(Y_j=1 | x^{(i)}) \prod_{l \in \mathcal{N}_i} P(Y_l=0 | x^{(i)})  \\
-			  \vdots\\
-			  &= \prod_{i=1}^m \left[ \prod_{j \in \mathcal{P}_i } h_{\theta^{(j)}(x)} \prod_{l \in \mathcal{N}_i} (1 - h_{\theta^{(l)}(x))} \right] \\
-			  &= \prod_{i=1}^m \left[ \prod_{j \in \mathcal{P}_i } \frac{1}{1 + \exp(-\theta^{(j)\top} x)} \exp(\theta^{(j)\top} x ) \prod_{l \in \mathcal{N}_i} P(Y_j=0 | x^{(i)}) \right]
 \end{align}
 
-
-% &= \prod_{i=1}^m (h_\theta(x^{(i)}))^{y^{(i)}} \times (1 - h_\theta(x^{(i)})^{(1-y^{(i)})})
 
 It will be easier to maximize the log likelihood:
 \begin{align}
 	l(\theta) &= \log L(\theta) \\
 			  &= \log \left( \prod_{i=1}^m  \prod_{j \in \mathcal{P}_i } P(Y_j=1 | x^{(i)}) \prod_{l \in \mathcal{N}_i} P(Y_l=0 | x^{(i)}) \right) \\
-			  &= \sum_{i=1}^m \left( \sum_{j \in \mathcal{P}_i } \log P(Y_j=1 | x^{(i)}) + \sum_{l \in \mathcal{N}_i} \log P(Y_l=0 | x^{(i)})  \right)
+			  &= \sum_{i=1}^m \left( \sum_{j \in \mathcal{P}_i } \log P(Y_j=1 | x^{(i)}) + \sum_{l \in \mathcal{N}_i} \log P(Y_l=0 | x^{(i)})  \right) \\
+			  &= \sum_{i=1}^m \left( \sum_{j \in \mathcal{P}_i } \log (\frac{1}{1 + \exp(-\theta^{(j)\top} x^{(i)})}) + \sum_{l \in \mathcal{N}_i} \log (1 - \frac{1}{1 + \exp(-\theta^{(l)\top} x^{(i)})}) \right) \\
+			  &= \sum_{i=1}^m \left( \sum_{j \in \mathcal{P}_i } \log (\sigma(\theta^{(j)\top} x^{(i)})) + \sum_{l \in \mathcal{N}_i} \log (\sigma(-\theta^{(l)\top} x^{(i)})) \right)
 \end{align}
 
-It is the same as minimizing the following (cross entropy loss):
+
+It is the same as minimizing the following (negative log likelihood):
 
 \begin{align} 
-	J(\theta) = - \left[ \sum_{i=1}^{m} \sum_{k=1}^{K} \mathds{1}\left\{y^{(i)} = k\right\} \log \frac{\exp(\theta^{(k)\top} x^{(i)})}{\sum_{j=1}^K \exp(\theta^{(j)\top} x^{(i)})}\right] 
+	J(\theta) = -l(\theta)
 \end{align}
 
-Notice that this generalizes the logistic regression cost function, which could also have been written:
+\subsection*{Optimization}
 
-\begin{align}
-	J(\theta) &= - \left[ \sum_{i=1}^m (1-y^{(i)}) \log (1-h_\theta(x^{(i)})) + y^{(i)} \log h_\theta(x^{(i)}) \right] \\ 
-			  &= - \left[ \sum_{i=1}^{m} \sum_{k=0}^{1} \mathds{1}\left\{y^{(i)} = k\right\} \log P(y^{(i)} = k | x^{(i)} ; \theta) \right] 
-\end{align}
-The softmax cost function is similar, except that we now sum over the K different possible values of the class label. Note also that in softmax regression, we have that
+We want to minimize $J(\theta)$. The derivative of $J(\theta)$ as given above with respect to $\theta_j^{(k)}$, $j \in [1,d]$ is:
 
 \begin{align}
-	P(y^{(i)} = k | x^{(i)} ; \theta) = \frac{\exp(\theta^{(k)\top} x^{(i)})}{\sum_{j=1}^K \exp(\theta^{(j)\top} x^{(i)}) }
+	\frac{\partial J(\theta)}{\partial \theta_j^{(k)}} = \sum_{i=1}^m x^{(i)}_j (h_{\theta_j^{(k)}}(x^{(i)}) - y_j^{(i)})
 \end{align}
+
+The entire gradient can be expressed as a $d \times K$ dimensional matrix (with d being the dimension of each sample feature and K the number of classes):
+
+\begin{align}
+	\nabla_\theta J(\theta) 
+	&= 
+	\begin{bmatrix}
+		\frac{\partial J(\theta)}{\partial \theta_1^{(1)}} 	& \dots 						& \frac{\partial J(\theta)}{\partial \theta_1^{(K)}} \\
+		\dots 												&  \frac{\partial J(\theta)}{\partial \theta_i^{(j)}} 	& \dots \\
+		\frac{\partial J(\theta)}{\partial \theta_d^{(1)}} 	& \dots 						& \frac{\partial J(\theta)}{\partial \theta_d^{(K)}}
+	\end{bmatrix} 
+\end{align}
+
+We can then apply gradient descent to find global minimum since $J(\theta)$ is convex, with learning rate $\alpha$:
+
+\begin{align}
+	\theta \leftarrow \theta - \alpha \nabla_\theta J(\theta)
+\end{align}
+
+
 
