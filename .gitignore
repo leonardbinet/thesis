@@ -9,6 +9,9 @@
 *.tex~
 *.DS_Store
 
+# Table of contents
+# *.toc 
+
 # then
 *.fls
 *.fdb_latexmk
@@ -17,7 +20,6 @@
 *.ist
 *.gz
 *.out
-*.toc
 *.glo
 *.log.txt
 *.synctex

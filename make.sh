@@ -1,1 +1,3 @@
-. clean.sh ; pdflatex -shell-escape rapport.tex ; . clean.sh ; mv rapport.pdf report.pdf
+pdflatex -shell-escape rapport.tex ; 
+mv rapport.pdf report.pdf
+# . clean.sh;

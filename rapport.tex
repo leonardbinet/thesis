@@ -134,28 +134,32 @@ pdftitle=
 \setlength\headheight{15pt}
 
 \include{title}
-\cleardoublepage   % Dans le cas du recto verso, ajoute une page blanche si besoin
-\tableofcontents{} % Table des matières
-\sloppy            % Justification moins stricte : des mots ne dépasseront pas des paragraphes
-\cleardoublepage
-% \include{abstract}
-% \cleardoublepage
-%\include{part1_alkemics}
-%\cleardoublepage
-%\include{part2a_cbow}
-\cleardoublepage
-\include{part3}
-\cleardoublepage
-\include{part4}
-\cleardoublepage
-\include{part5}
-\cleardoublepage
-\include{concl}
-\cleardoublepage
-\include{appendix}
-\cleardoublepage
+\include{abstract}
 
-\bibliographystyle{plain}
-\bibliography{biblio}
+\cleardoublepage   % Dans le cas du recto verso, ajoute une page blanche si besoin
+\tableofcontents % Table des matières
+\sloppy            % Justification moins stricte : des mots ne dépasseront pas des paragraphes
+%\cleardoublepage
+
+\cleardoublepage
+\include{p_intro}
+%\cleardoublepage
+\include{p_fasttext}
+%\cleardoublepage
+%\include{part3}
+%\cleardoublepage
+%\include{part4}
+\cleardoublepage
+%\include{part5}
+%\cleardoublepage
+%\include{concl}
+%\cleardoublepage
+\appendix
+\include{p_logistic_regression_multiclass_multilabel}
+
+%\cleardoublepage
+
+%\bibliographystyle{plain}
+%\bibliography{biblio}
 
 \end{document}
