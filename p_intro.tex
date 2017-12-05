@@ -45,15 +45,18 @@ Product Stream is a web application that enables:
 
 \subsection{The technological stack}
 
-The stack in Alkemics is composed of set of micro services communicating with synchronous calls (HTTPS) and both synchronous and asynchronous messaging (TCP enabled by Rabbit MQ).
+\textbf{Micro-services architecture}
+The stack in Alkemics is composed of set of dozens of micro services communicating with synchronous calls (HTTPS) and both synchronous and asynchronous messaging (TCP enabled by Rabbit MQ).
+Each service has a domain specific task: data ingestion, data classification, APIs for merchandising, etc. A subset of the services are exposed to third parties and clients.
 
-Each service has a domain specific task: data ingestion, data classification, APIs for merchandising, etc. A subset of the services  are exposed to third parties and clients.
-
+\textbf{User interface}
 User Interface dashboards also call the APIs to make functionalities available to the users (makers and retailers) trough a web browser.
+The front part of the website is coded with React framework.
 
-A set of SDKs are also provided to clients (retailers) to allow them to use merchandising functionalities directly embedded in their websites.
+\textbf{APIs and SDKs}
+A set of SDKs are also provided to retailers to allow them to use merchandising functionalities directly embedded in their websites.
 
-
+\textbf{Storage vs indexation}
 All Alkemics crucial data is stored in relational databases (MySQL). Yet if relationnal databases provide very useful functionalities to guaranty integrity of data, its indexing capabilities remain quite poor in comparison to non-relational databases.
 
 That's we also create ElasticSearch indexes, containing data that is already stored in relational databases, but indexed in a format allowing quick and performant queries.

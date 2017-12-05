@@ -1,8 +1,16 @@
 \chapter{Machine learning challenges}
 \label{cha:results}
 
+
+
+
 \section{Natural Language Processing}
-\subsection{Word2Vec}
+\subsection{Word2Vec models}
+
+When dealing with natural language, one of the main challenges is to  
+\subsubsection*{Continuous Bag of Words}
+\subsubsection*{Skip-Gram}
+
 \subsection{Fasttext}
 
 \subsubsection{Model}
@@ -209,7 +217,7 @@ $A$ weights:
 	\right)
 \end{align}
 
-\section*{Fasttext parameters implementation}
+\subsection{Fasttext parameters implementation}
 
 List of all parameters:
 \begin{itemize}
@@ -240,6 +248,10 @@ Fasttext implementation lets you choose two parameters to control $\mu$ over tim
 
 The learning rate $\mu$ decrease linearly, from initial given parameter $lr$ to zero.
 
+
+
+
+
 \pagebreak
 \section{Multilabel classification}
 \subsection{Review of major algorithms}
@@ -249,5 +261,83 @@ The learning rate $\mu$ decrease linearly, from initial given parameter $lr$ to 
 
 \subsection{Multiclass/multilabel scoring metrics}
 \subsubsection{Regular binary metrics}
+
+
+Evaluation metrics should take into account the class imbalance between churners and non-churners. A greater cost should be associated with false negatives than with false positives: misidentify a potential churner costs far more to a company than identifying a non-churner as churner. Moreover, we are more interested in perfectly identifying those customers who are most likely to churn than perfectly identifying \textit{all} the potential churners.
+
+\subsubsection{Binary classification metrics}
+
+As we are in a binary classification problem, several metrics can be used to assess the performance of the models.
+
+Lets define some naming/metrics used in the following:
+
+{\ttfamily
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ll}
+        \toprule
+        $TP / FP$          &    $true/false\ positives$ \\
+        $TN / FN$       &    $true/false\ negatives$  \\
+        $P$       &    $TP+FN$ \\
+        $N$    &    $TN + FP$ \\
+        $recall$      &    ${TP} / {P}$ \\
+        $precision$        &   ${TP} / {(TP+FP)}$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+}
+
+Precision, recall and accuracy are often used to measure the classification quality of binary classifiers.
+
+In customer churn prediction, the misclassification of a churner may result in the loss of the customer but the misclassification of a non-churner may result in some extra marketing cost.  Because the former is more costly than the latter, recall is a more important measure than precision \cite{VdP05}.
+While precision and recall measure how accurate the methods can identify the observations in a single class, the AUC measures how well the methods discriminate the two classes.
+
+Precision measures that fraction of examples classified as churner that are truly churner.
+
+Recall measures the fraction of well classified churners.
+
+
+The problem of churn differs from classical classification/prediction setups, notably in the objectives to optimize on. Although having a good recall, for instance, is important (we want as many churners well classified as possible), one should really take into account the \textit{business application}: a typical use of a churn prediction model is to target potential future churners and to launch a marketing campaign to retain them. In such cases, we are willing to tolerate greater overall error, in return for better identifying the most likely future churners for further attention.
+
+Contacting a large proportion of the customers is expensive: one wants to maximize the number of potential churners reached while minimizing the total number of contacted customers. Metrics such as \textit{lift} (\ref{sub:lift}) express very well this business application constraint.
+
+
+\textbf{F-score}
+
+The $F_1$ is a measure of a classifier accuracy, computed as the harmonic mean of precision and recall: $$F_1= 2. \frac{precision.recall}{precision+recall}$$\tabularnewline
+This definition assign the same weight to precision and recall but in our case, recall is more valuable than precision: we want all the churners to be correctly classified and type I error has less monetary impact (people may be targeted for a marketing campaign even if they weren't about to churn).
+
+To handle these constraints, the $F_\beta-score$ is adapted: in consists in the \textit{weighted} harmonic mean of recall and precision, assigning $\beta$ times as much importance to recall as precision: $$F_\beta = (1+\beta^2) \frac{precision.recall}{\beta^2.precision+recall}$$
+
+\textbf{Calibration plot} 
+
+When dealing with probabilistic classifiers, one of the signs that a suitable classification model has been found is also that predicted probabilities (scores) are well calibrated, that is that a fraction of about $p$ of events with predicted probability $p$ actually occurs. Calibration plot is a method that shows us how well the classifier is calibrated \cite{VC06}: $$x = true\ probability,\ y=predicted\ probability$$
+
+True probabilities are calculated for (sub)sets of examples with the same predicted score $P(y=1|X) \in [c-\delta, c+\delta]$: $$ p_{true}^c = \frac{P_{sub}^c}{P_{sub}^c + N_{sub}^c}$$ with $P_{sub}^c, N_{sub}^c$ being the proportion on positives and negative examples in a given subset with predicted probabilities $[c-\delta, c+\delta]$. The calibration plot of a perfectly calibrated classifier will be a diagonal.
+
+
+
 \subsubsection{Adaptation to multiclass-multilabel: global / local metrics}
-\subsubsection{Precision/recall curves}
+
+
+
+\section{Calibration}
+
+\subsection{Predictions precision/recall estimation}
+
+\section{Invalid/sparse data}
+
+\subsection{Strategies to handle sparse data}
+Consider recall rather than precision. The presence of a lot a FN will impact precision, not recall.
+
+\subsection{Iterative approach to bootstrap new classes}
+Manually label some products with new classes, then focus validation on these products. The validated suggestions will be used in next classification workflow.
+
+After some iterations, there might be enough occurences to ensure sufficient scores.
+
+
+\section{Misc}
+
+\subsection{Dive into kind tree-structure}
+\subsection{Enforce better calibration}
+\subsection{Tuning strategies}

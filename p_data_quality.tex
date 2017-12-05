@@ -85,7 +85,7 @@ After these predictions are made, we want to evaluate it against products attrib
 \section{Suggestion Workflow to improve data-quality}
 
 
-This part aims at presenting the workflow we use to provide attribute suggestions on product pages‡ to our users.
+This part aims at presenting the workflow we use to provide attribute suggestions on product-pages to our users.
 
 \begin{figure}[H]
 \centering
@@ -118,7 +118,18 @@ This part aims at presenting the workflow we use to provide attribute suggestion
 From product database.
 From validation database: suggestion validated by Alkemics, not yet accepted/refused by client. -> ability to bootstrap and improve models. 
 
-The idea is to get gather enough information from products (-> more fields), but on fields with sufficient completion (-> less fields).
+
+In our data-model, a product can consist of more than one hundred of fields, yet only some of them can be sufficient.
+The idea is to find a compromise between gathering enough information from products (-> more fields), but on fields with sufficient completion (-> less fields).
+
+Let's take a cereal bar of brand Grany:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.50]{./images/sample/grany_picture.png}
+\caption{Product for which we will try to improve data-quality.}
+\end{figure}
+
+Here are the extracted attributes that will be processed to provide our features.
 
 \begin{lstlisting}[language=json]
 {
@@ -153,6 +164,8 @@ This is classic NLP preprocessing.
 	\end{itemize}
 	\item concatenate tokens
 \end{enumerate}
+
+Our previous object is now a list of preprocessed tokens that take the following form.
 
 \begin{lstlisting}[language=json]
 "grany cur chocolat lait noiset plais brut cereal associe fond chocolat lait grany barr cerealier fourre chocolat noiset grany coeur fond gout chocolat noiset ingredient cereal farin riz farin ble grain flocon ble flocon avoin flocon orge farin ble malt sirop glucos fructos sucr huil coprah lait ecrem poudr huil palm chocolat sucr pat cacao pat noiset cacao maigr poudr humect glycerol sel gluten ble dextros emulsifi lecithin tournesol malt orge arom noiset arachid conten soj autr fruit coqu"
@@ -239,7 +252,12 @@ Annexe:
 
 
 \subsection{Validation (or refusal) from Alkemics}
-Since we must reach a high degree of confidence in our predictions, and since we do not yet have history about how well we perform, each suggestion is manually validated. (Suggestions issued from 2 or more sources are automatically validated).
+Since we must reach a high degree of confidence in our predictions, and since we do not yet have history about how well we perform, each suggestion is manually validated. 
+
+
+For all predictions that are not values already stored in products' data (if the prediction match an already existing product data, everything's fine and we don't need to change its value), we will validate or refuse the suggestion.
+
+A part of this task is semi-automated: for instance, suggestions issued from both scrapping and machine learning, with an estimated precision of 90\% are batch validated.
 
 \begin{figure}[H]
 \centering
@@ -250,95 +268,102 @@ Since we must reach a high degree of confidence in our predictions, and since we
 
 \subsection{Suggestion display to users in product pages, and acceptation (or dismissal) from manufacturer}
 
+Now that the suggestion is validated, we notify the manufacturer in charge of this product, and include a control in his product page allowing him to easily accept of dismiss the suggestion.
+
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.35]{./images/workflow/stream-suggestion-3.png}
 \caption{Suggestion acceptation by user.}
 \end{figure}
 
-
-
+In case of acceptation, the product's data is changed in Alkemics product database. Else, in case of dismissal, we store the fact that the suggestion is 'wrong' so we don't notify the manufacturer if we repredict the same value the day after.
 
 
 \pagebreak
-\section{Monitoring}
+\section{Regular maintenance and improvement tasks}
+
+Now that the workflow is deployed, work isn't over.
+
+\subsection{Monitoring}
+
 Given the complexity of the workflow, and quality expected by clients, we have to closely monitor some metrics:
 \begin{itemize}
+	\item did the workflow worked, if not where did it fail
 	\item is there an evolution of classes distribution
 	\item how our scores behave at training stage
 	\item whether our predictions get rejected at validation stage
 	\item do our validated suggestion get dismissed by user at acceptation stage
 \end{itemize}
 
-\subsection{Performance metrics definition}
+\subsubsection{Check workflow completion}
+Our workflow consists of lots of interdependent tasks. Some of them have to be completed in a precise order. Some can be parallelized, some not. To ensure that our workflow runs as expected we use a workflow management tool: Luigi.
 
-Evaluation metrics should take into account the class imbalance between churners and non-churners. A greater cost should be associated with false negatives than with false positives: misidentify a potential churner costs far more to a company than identifying a non-churner as churner. Moreover, we are more interested in perfectly identifying those customers who are most likely to churn than perfectly identifying \textit{all} the potential churners.
+By defining each task dependencies (a task can depend on multiple other tasks), Luigi will draw an acyclic directed dependency graph.
 
-\subsubsection*{Binary classification metrics}
+Luigi library comes with a useful web interface, showing wich tasks are pending/runing/completed or have failed:
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.50]{./images/monitoring/luigi-graph-3.png}
+\caption{Classification workflow dependency graph.}
+\end{figure}
 
-As we are in a binary classification problem, several metrics can be used to assess the performance of the models.
+\subsubsection{See and understand scores evolution}
+Knowing how our models perform is crucial to know how confident we can be into our models.
 
-Lets define some naming/metrics used in the following:
+To do so I built a monitoring interface drawing the scores evolution for different fields we try to enrich.
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.50]{./images/monitoring/global-scores-evolution-2.png}
+\caption{Classification micro-average global scores evolution.}
+\end{figure}
 
-{\ttfamily
-\begin{table}[H]
-    \centering
-    \begin{tabular}{ll}
-        \toprule
-        $TP / FP$          &    $true/false\ positives$ \\
-        $TN / FN$       &    $true/false\ negatives$  \\
-        $P$       &    $TP+FN$ \\
-        $N$    &    $TN + FP$ \\
-        $recall$      &    ${TP} / {P}$ \\
-        $precision$        &   ${TP} / {(TP+FP)}$ \\
-        $Yrate$      &    $(TP+FP) / {(P+N)}$ \\
-        $FPrate$      &    ${FP} / {N}$ \\
-        \bottomrule
-    \end{tabular}
-\caption{some metrics}
-\end{table}
-}
+Among the different reasons why our models scores can evolve, one is the change of classes distribution, so some graphs can help check if something is wrong: in this case, the following graph helped us find why a field predictions dropped: some wrongly labeled data was introduced.
 
-Precision, recall and accuracy are often used to measure the classification quality of binary classifiers.
-
-In customer churn prediction, the misclassification of a churner may result in the loss of the customer but the misclassification of a non-churner may result in some extra marketing cost.  Because the former is more costly than the latter, recall is a more important measure than precision \cite{VdP05}.
-While precision and recall measure how accurate the methods can identify the observations in a single class, the AUC measures how well the methods discriminate the two classes.
-
-Precision measures that fraction of examples classified as churner that are truly churner.
-
-Recall measures the fraction of well classified churners.
-
-\subsubsection{note} % (fold)
-\label{ssub:note_1}
-The problem of churn differs from classical classification/prediction setups, notably in the objectives to optimize on. Although having a good recall, for instance, is important (we want as many churners well classified as possible), one should really take into account the \textit{business application}: a typical use of a churn prediction model is to target potential future churners and to launch a marketing campaign to retain them. In such cases, we are willing to tolerate greater overall error, in return for better identifying the most likely future churners for further attention.
-
-Contacting a large proportion of the customers is expensive: one wants to maximize the number of potential churners reached while minimizing the total number of contacted customers. Metrics such as \textit{lift} (\ref{sub:lift}) express very well this business application constraint.
-
-% subsubsection note (end)
-
-\subsection{F-score} % (fold)
-\label{sub:fbeta_score}
-
-The $F_1$ is a measure of a classifier accuracy, computed as the harmonic mean of precision and recall: $$F_1= 2. \frac{precision.recall}{precision+recall}$$\tabularnewline
-This definition assign the same weight to precision and recall but in our case, recall is more valuable than precision: we want all the churners to be correctly classified and type I error has less monetary impact (people may be targeted for a marketing campaign even if they weren't about to churn).
-
-To handle these constraints, the $F_\beta-score$ is adapted: in consists in the \textit{weighted} harmonic mean of recall and precision, assigning $\beta$ times as much importance to recall as precision: $$F_\beta = (1+\beta^2) \frac{precision.recall}{\beta^2.precision+recall}$$
-
-% subsection fbeta_score (end)
-
-\subsection{Calibration plot} % (fold)
-\label{sub:calibration_plot}
-
-When dealing with probabilistic classifiers, one of the signs that a suitable classification model has been found is also that predicted probabilities (scores) are well calibrated, that is that a fraction of about $p$ of events with predicted probability $p$ actually occurs. Calibration plot is a method that shows us how well the classifier is calibrated \cite{VC06}: $$x = true\ probability,\ y=predicted\ probability$$
-
-True probabilities are calculated for (sub)sets of examples with the same predicted score $P(y=1|X) \in [c-\delta, c+\delta]$: $$ p_{true}^c = \frac{P_{sub}^c}{P_{sub}^c + N_{sub}^c}$$ with $P_{sub}^c, N_{sub}^c$ being the proportion on positives and negative examples in a given subset with predicted probabilities $[c-\delta, c+\delta]$. The calibration plot of a perfectly calibrated classifier will be a diagonal.
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.30]{./images/monitoring/local-classes-evolution.png}
+\caption{Local classes distribution evolution. We can detect the creation of an invalid class that led to dropping scores.}
+\end{figure}
 
 
-\subsubsection*{Multiclass-multilabel classification metrics}
+\subsubsection{Check validation / Acceptation rates}
 
-\subsubsection*{Pursuived objectives: precision/recall }
+In machine learning, the more frequent way to estimate a model performance is to predict on a test-set and compare predictions to true labels of the test-set.
+
+In our case, we can also check the validation/refusal ratio at validation stage:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.50]{./images/monitoring/validation-acceptation-monitoring.png}
+\caption{Validation/Acceptation rates.}
+\end{figure}
+
+\subsubsection{Evaluate business impact}
+
+\subsection{Deliver suggestion validation}
+
+By a mix of automation and manual validation.
+A big effort has been made to build an internal suggestion validation dashboard. 
+
+Even though it is not 'sexy', it is definitely necessary until we have enough feedback and experience.
+
+\subsection{Tune fasttext hyperparameters}
+
+Each predicted field data-set has different charateristics:
+\begin{itemize}
+	\item number of different classes: from 5 to 300
+	\item classes disparity: some fields have very distinct classes, whereas some others have very related classes.
+	\item label density (for multilabel): do your products have on average 1 label or 5 different labels ?
+\end{itemize}
+
+Then, each of these tasks might require different model hyper-parameters (those parameters will be detailed in the next chapter).
+That's why we build a service on a dedicated machine whose goal is to find the best parameters.
+
+\subsection{Bootstrap new classes/fields}
+
+Everyday at Alkemics, clients use our plateform, and the data changes, lives. Thus, unlike in kaggle competition, our datasets evolves.
+For some reasons we might want not to take into account some deprecated classes. For instance the kind field.
+
+Explain ...
 
 
-\subsection{Workflow graph}
-
-\subsection{Bootstrap}

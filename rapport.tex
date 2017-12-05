@@ -131,7 +131,7 @@
 % Format multiline text in subscripts
 \newcommand\multiLine[1]{\text{\scriptsize\tabular[t]{@{}l@{}}#1\endtabular}}
 
-\newcommand{\reporttitle}{Product Attribute prediction}     % Titre
+\newcommand{\reporttitle}{Product data-quality improvement through attribute prediction}
 \newcommand{\reportauthor}{} % Auteur
 \newcommand{\reportsubject}{Professional Thesis} % Sujet
 \newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
@@ -170,26 +170,24 @@ pdftitle=
 \cleardoublepage   % Dans le cas du recto verso, ajoute une page blanche si besoin
 \tableofcontents % Table des matières
 \sloppy            % Justification moins stricte : des mots ne dépasseront pas des paragraphes
-%\cleardoublepage
 
 \cleardoublepage
 \include{p_intro}
-%\cleardoublepage
+\cleardoublepage
 \include{p_data_quality}
-%\cleardoublepage
+\cleardoublepage
 \include{p_machine_learning}
 %\cleardoublepage
 %\include{part3}
 %\cleardoublepage
 %\include{part4}
-\cleardoublepage
+%\cleardoublepage
 %\include{part5}
-%\cleardoublepage
-%\include{concl}
-%\cleardoublepage
+\cleardoublepage
+\include{concl}
+\cleardoublepage
 \appendix
 \include{p_logistic_regression_multiclass_multilabel}
-\include{p_binary_classification_metrics}
 
 %\cleardoublepage
 
