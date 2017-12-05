@@ -9,6 +9,7 @@
 
 \documentclass[a4paper, 12pt]{report}
 
+
 \usepackage{geometry}
 \usepackage[english]{babel}
 \usepackage[utf8]{inputenc}
@@ -85,6 +86,36 @@
 % nested bullet lists
 \renewcommand{\labelitemii}{$\star$}
 
+% For json
+\usepackage{bera}% optional: just to have a nice mono-spaced font
+\usepackage{listingsutf8}
+\usepackage{xcolor}
+
+\colorlet{punct}{red!60!black}
+\definecolor{background}{HTML}{EEEEEE}
+\definecolor{delim}{RGB}{20,105,176}
+\colorlet{numb}{magenta!60!black}
+
+\lstdefinelanguage{json}{
+    basicstyle=\normalfont\ttfamily,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    backgroundcolor=\color{background},
+    extendedchars=false,
+    escapeinside={\%*}{*)},
+    breakatwhitespace=true,
+    inputencoding=utf8,
+    literate=
+     *{:}{{{\color{punct}{:}}}}{1}
+      {,}{{{\color{punct}{,}}}}{1}
+      {\{}{{{\color{delim}{\{}}}}{1}
+      {\}}{{{\color{delim}{\}}}}}{1}
+      {[}{{{\color{delim}{[}}}}{1}
+      {]}{{{\color{delim}{]}}}}{1},
+}
+
 % -----------------------------------------------------------------
 %                              Tools
 % -----------------------------------------------------------------
@@ -144,7 +175,9 @@ pdftitle=
 \cleardoublepage
 \include{p_intro}
 %\cleardoublepage
-\include{p_fasttext}
+\include{p_data_quality}
+%\cleardoublepage
+\include{p_machine_learning}
 %\cleardoublepage
 %\include{part3}
 %\cleardoublepage
@@ -156,6 +189,7 @@ pdftitle=
 %\cleardoublepage
 \appendix
 \include{p_logistic_regression_multiclass_multilabel}
+\include{p_binary_classification_metrics}
 
 %\cleardoublepage
 

@@ -1,0 +1,253 @@
+\chapter{Machine learning challenges}
+\label{cha:results}
+
+\section{Natural Language Processing}
+\subsection{Word2Vec}
+\subsection{Fasttext}
+
+\subsubsection{Model}
+Suppose a previous layer $h$ (taking a vector x of given size in ouput space of size d) as follow:
+\begin{align}
+	h 
+	&= 
+	\begin{bmatrix} 
+		h_1 \\
+		h_2 \\
+		\vdots \\
+		h_{\textit{dim}}
+	\end{bmatrix}\\
+	&= A^{\top}x
+\end{align}
+
+
+\begin{align}
+	h_j = A^{(j)\top}x
+\end{align}
+
+With $A$ being the matrix of weights from input to hidden layer, of size $(\textit{dim}, V)$, ie dimension of vector embeddings $\times$ vocabulary size.
+\begin{align}
+	A &= \left[\begin{array}{cccc}| & | & | & | \\ A^{(1)} & A^{(2)} & \cdots & A^{(\textit{dim})} \\ | & | & | & | \end{array}\right]\\
+	A &= \left[
+		\begin{array}{cccc} 
+		  	-- & A_{(1)} & -- \\
+		  	-- & A_{(2)} & -- \\
+		  	&\vdots 	\\
+		  	-- & A_{(V)} & --
+		\end{array}\right]
+\end{align}
+
+
+
+Let's denote:
+
+\begin{align}
+	s_k  = B^{(k)\top} h = \sum_{j=1}^{\textit{dim}} B^{(k)\top}_j h_j 
+\end{align}
+
+we can express $f$ as, $\forall k \in [1, K]$:
+
+\begin{align}
+	f_k  = \sigma(s_k) = \sigma( \sum_{j=1}^{d} B^{(k)\top}_j h_j) 
+\end{align}
+
+Lets consider the following error on one sample $(x, y)$:
+
+\begin{align}
+	E = - \sum_{k=1}^K
+  			  	\left\{
+				    \begin{array}{ll}
+				        \log (f_k) & \mbox{if } y_k =1 \\
+				        \log (1 - f_k) & \mbox{if } y_k =0
+				    \end{array}
+				\right.
+\end{align}
+
+This error is relevant since the minimization of this error is equivalent to maximizing the maximum of (log-)likelihood.
+Plus, it is interpretable: if the $k^{th}$ component $y_k$ is:
+\begin{itemize}
+	\item positive ($y_k=1$): then the loss increase if $f_k$ is near 0, and decrease if $f_k$ is near 1.
+	\item negative ($y_k=0$): then the loss decrease if $f_k$ is near 0, and increase if $f_k$ is near 1.
+\end{itemize}
+
+
+
+We can represent it as the following multilayer network:
+
+\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep]
+    \tikzstyle{every pin edge}=[<-,shorten <=1pt]
+    \tikzstyle{neuron}=[circle,fill=black!25,minimum size=17pt,inner sep=0pt]
+    \tikzstyle{input neuron}=[neuron, fill=yellow!50];
+    \tikzstyle{output neuron}=[neuron, fill=blue!50];
+    \tikzstyle{hidden neuron}=[neuron, fill=red!50];
+    \tikzstyle{true neuron}=[neuron, fill=green!50];
+    \tikzstyle{annot} = [text width=4em, text centered]
+
+    % Draw the input layer nodes
+    \foreach \name / \y in {1,...,7}
+    % This is the same as writing \foreach \name / \y in {1/1,2/2,3/3,4/4}
+        \node[input neuron, pin=left:$x_{\y}$ ] (I-\name) at (0,-\y) {};
+
+    % Draw the hidden layer nodes
+    \foreach \name / \y in {1,...,3}
+        %\path[yshift=0.5cm] node[hidden neuron] (H-\name) at (\layersep,-\y cm) {};
+        \node[hidden neuron] (H-\name) at (\layersep,-1 -\y) {};
+
+    % Draw the output layer node
+    % \node[output neuron,pin={[pin edge={->}]right:Output}, right of=H-3] (O) {};
+
+	\foreach \name / \y in {1,...,4}
+        \node[output neuron, pin=right:$f_{\y}$ ] (O-\name) at (\layersep*2,-0.5 -\y) {};
+
+    % Draw the true layer node
+
+	\foreach \name / \y in {1,...,4}
+        \node[true neuron, pin=right:$y_{\y}$ ] (T-\name) at (\layersep*3,-0.5 -\y) {};
+
+
+    % Connect every node in the input layer with every node in the
+    % hidden layer.
+    \foreach \source in {1,...,7}
+        \foreach \dest in {1,...,3}
+            \path (I-\source) edge (H-\dest);
+
+    % Connect every node in the hidden layer with the output layer
+    \foreach \source in {1,...,3}
+        \foreach \dest in {1,...,4}
+	        \path (H-\source) edge (O-\dest);
+
+    % Annotate the layers
+    \node[annot,above of=H-1, node distance=2.5cm] (hl) {Hidden layer: $h$ of size \textit{dim}};
+    \node[annot,left of=hl] {Input layer: $x$ (size $V$)};
+    \node[annot,right of=hl] (ol) {Output layer: $f$ of size $K$};
+    \node[annot,right of=ol] {True layer: $y$ of size $K$};
+
+    \node[annot] (A) at (\layersep/2,-6) {$A$};
+    \node[annot] (B) at (\layersep*3/2,-5) {$B$};
+
+\end{tikzpicture}
+
+\subsubsection*{Gradient retropropagation}
+
+
+\begin{align}
+	\frac{ \partial E } { \partial f_k } = 
+		\left\{
+		    \begin{array}{ll}
+		        - \frac{1}{f_k} & \mbox{if } y_k =1 \\
+		        \frac{1}{1 - f_k} & \mbox{if } y_k =0
+		    \end{array}
+		\right.
+\end{align}
+
+
+\begin{align}
+	\frac{ \partial E } { \partial s_k } 
+		=  
+		\frac{ \partial E } { \partial f_k } \cdot \frac{ \partial f_k } { \partial s_k } 
+		&=
+		\left\{
+		    \begin{array}{ll}
+		        - \frac{1}{f_k} \cdot f_k (1 - f_k)& \mbox{if } y_k =1 \\
+		        \frac{1}{1 - f_k} \cdot f_k (1 - f_k)& \mbox{if } y_k =0
+		    \end{array}
+		\right. \\
+		&=
+		\left\{
+		    \begin{array}{ll}
+		       f_k - 1 & \mbox{if } y_k =1 \\
+		       f_k & \mbox{if } y_k =0
+		    \end{array}
+		\right. \\
+		&= f_k - y_k
+\end{align}
+
+
+
+\begin{align}
+	\frac{\partial E}{\partial B_i^{(k)}} 
+	= 
+	\frac{\partial E}{\partial s_k} \cdot \frac{\partial s_k}{\partial B_i^{(k)}} 
+	= 
+	h_i (f_k - y_k)
+\end{align}
+
+
+Trick: derivate $E$ in regard to $s_k$:
+\begin{align}
+	\frac{\partial E}{\partial h_j} 
+	&= 
+	\sum_{k=1}^K \frac{\partial E}{\partial s_k} \cdot \frac{\partial s_k}{\partial h_j} \\
+	&= 
+	\sum_{k=1}^K B_j^{(k)} (f_k - y_k)
+\end{align}
+
+
+\begin{align}
+	\frac{\partial E}{\partial A_i^{(j)}} 
+	&= 
+	\frac{\partial E}{\partial h_j} \cdot \frac{\partial h_j}{\partial A_i^{(j)}} \\
+	&= 
+	x_i \sum_{k=1}^K B_j^{(k)} (f_k - y_k)
+\end{align}
+
+
+\subsubsection*{Gradient descent}
+
+At each sample $(x, y)$, given a learning rate $\mu$, we update weight as follow:
+
+$B$ weights:
+\begin{align}
+	B_i^{(k)\mbox{new}} \leftarrow B_i^{(k)\mbox{old}} - \mu (h_i (f_k - y_k))
+\end{align}
+
+$A$ weights:
+\begin{align}
+	A_i^{(j)\mbox{new}} \leftarrow A_i^{(j)\mbox{old}} - 
+	\mu 
+	\left(
+		x_i \sum_{k=1}^K B_j^{(k)\mbox{new}} (f_k - y_k) 
+	\right)
+\end{align}
+
+\section*{Fasttext parameters implementation}
+
+List of all parameters:
+\begin{itemize}
+	\item \textit{epoch}
+	\item \textit{lr}
+	\item \textit{lrUpdateRate}
+	\item \textit{dim}
+	\item \textit{ws}
+	\item \textit{loss}
+	\item \textit{neg}
+	\item \textit{minCountLabel}
+	\item \textit{minCount}
+	\item \textit{minn}
+	\item \textit{maxn}
+	\item \textit{bucket}
+	\item \textit{t}
+\end{itemize}
+
+\subsection*{Dictionnary}
+
+\subsection*{Learning rate}
+
+Fasttext implementation lets you choose two parameters to control $\mu$ over time:
+\begin{itemize}
+	\item \textit{lr}: sets $\mu$ at initialization
+	\item \textit{lrUpdateRate}: how continuous \textit{vs} per steps \textit{lr} decays
+\end{itemize}
+
+The learning rate $\mu$ decrease linearly, from initial given parameter $lr$ to zero.
+
+\pagebreak
+\section{Multilabel classification}
+\subsection{Review of major algorithms}
+\subsubsection{Problem Transformation Approaches}
+\subsubsection{Adaptative Approaches}
+\subsubsection{Neural network}
+
+\subsection{Multiclass/multilabel scoring metrics}
+\subsubsection{Regular binary metrics}
+\subsubsection{Adaptation to multiclass-multilabel: global / local metrics}
+\subsubsection{Precision/recall curves}

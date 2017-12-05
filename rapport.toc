@@ -1,0 +1,61 @@
+\select@language {english}
+\contentsline {chapter}{\numberline {1}Introduction}{3}{chapter.1}
+\contentsline {section}{\numberline {1.1}Alkemics}{3}{section.1.1}
+\contentsline {subsection}{\numberline {1.1.1}Product Data Empowerment}{3}{subsection.1.1.1}
+\contentsline {subsection}{\numberline {1.1.2}Product Stream}{4}{subsection.1.1.2}
+\contentsline {subsection}{\numberline {1.1.3}The technological stack}{5}{subsection.1.1.3}
+\contentsline {section}{\numberline {1.2}Professional thesis objective}{5}{section.1.2}
+\contentsline {chapter}{\numberline {2}Data quality challenge}{6}{chapter.2}
+\contentsline {section}{\numberline {2.1}Stakes}{6}{section.2.1}
+\contentsline {subsection}{\numberline {2.1.1}What is data-quality}{6}{subsection.2.1.1}
+\contentsline {subsection}{\numberline {2.1.2}Why it matters}{7}{subsection.2.1.2}
+\contentsline {subsection}{\numberline {2.1.3}Why is the data of poor quality}{7}{subsection.2.1.3}
+\contentsline {subsection}{\numberline {2.1.4}What can we do about data-quality}{8}{subsection.2.1.4}
+\contentsline {subsection}{\numberline {2.1.5}What are our constraints}{8}{subsection.2.1.5}
+\contentsline {section}{\numberline {2.2}Suggestion Workflow to improve data-quality}{9}{section.2.2}
+\contentsline {subsubsection}{Workflow steps}{9}{section*.4}
+\contentsline {subsection}{\numberline {2.2.1}Feature and labels extraction}{10}{subsection.2.2.1}
+\contentsline {subsection}{\numberline {2.2.2}Feature engineering}{10}{subsection.2.2.2}
+\contentsline {subsection}{\numberline {2.2.3}Training stage}{11}{subsection.2.2.3}
+\contentsline {subsection}{\numberline {2.2.4}Predict stage}{12}{subsection.2.2.4}
+\contentsline {subsection}{\numberline {2.2.5}Machine learning suggestion indexation with scrapped information}{12}{subsection.2.2.5}
+\contentsline {subsection}{\numberline {2.2.6}Validation (or refusal) from Alkemics}{13}{subsection.2.2.6}
+\contentsline {subsection}{\numberline {2.2.7}Suggestion display to users in product pages, and acceptation (or dismissal) from manufacturer}{13}{subsection.2.2.7}
+\contentsline {section}{\numberline {2.3}Monitoring}{14}{section.2.3}
+\contentsline {subsection}{\numberline {2.3.1}Performance metrics definition}{14}{subsection.2.3.1}
+\contentsline {subsubsection}{note}{15}{section*.9}
+\contentsline {subsection}{\numberline {2.3.2}F-score}{15}{subsection.2.3.2}
+\contentsline {subsection}{\numberline {2.3.3}Calibration plot}{15}{subsection.2.3.3}
+\contentsline {subsection}{\numberline {2.3.4}Workflow graph}{16}{subsection.2.3.4}
+\contentsline {subsection}{\numberline {2.3.5}Bootstrap}{16}{subsection.2.3.5}
+\contentsline {chapter}{\numberline {3}Machine learning challenges}{17}{chapter.3}
+\contentsline {section}{\numberline {3.1}Natural Language Processing}{17}{section.3.1}
+\contentsline {subsection}{\numberline {3.1.1}Word2Vec}{17}{subsection.3.1.1}
+\contentsline {subsection}{\numberline {3.1.2}Fasttext}{17}{subsection.3.1.2}
+\contentsline {subsubsection}{Model}{17}{section*.12}
+\contentsline {section}{\numberline {3.2}Multilabel classification}{22}{section.3.2}
+\contentsline {subsection}{\numberline {3.2.1}Review of major algorithms}{22}{subsection.3.2.1}
+\contentsline {subsubsection}{Problem Transformation Approaches}{22}{section*.18}
+\contentsline {subsubsection}{Adaptative Approaches}{22}{section*.19}
+\contentsline {subsubsection}{Neural network}{22}{section*.20}
+\contentsline {subsection}{\numberline {3.2.2}Multiclass/multilabel scoring metrics}{22}{subsection.3.2.2}
+\contentsline {subsubsection}{Regular binary metrics}{22}{section*.21}
+\contentsline {subsubsection}{Adaptation to multiclass-multilabel: global / local metrics}{22}{section*.22}
+\contentsline {subsubsection}{Precision/recall curves}{22}{section*.23}
+\contentsline {chapter}{\numberline {A}Logistic Regression: from binary, to multiclass, to multilabel}{23}{appendix.A}
+\contentsline {section}{\numberline {A.1}Binary case: Logistic regression}{24}{section.A.1}
+\contentsline {subsection}{\numberline {A.1.1}Model}{24}{subsection.A.1.1}
+\contentsline {subsection}{\numberline {A.1.2}Objective}{25}{subsection.A.1.2}
+\contentsline {subsection}{\numberline {A.1.3}Optimization}{26}{subsection.A.1.3}
+\contentsline {subsection}{\numberline {A.1.4}Vectorial representations}{26}{subsection.A.1.4}
+\contentsline {section}{\numberline {A.2}Multiclass case: Softmax regression}{27}{section.A.2}
+\contentsline {subsection}{\numberline {A.2.1}Model}{27}{subsection.A.2.1}
+\contentsline {subsection}{\numberline {A.2.2}Objective}{28}{subsection.A.2.2}
+\contentsline {subsection}{\numberline {A.2.3}Optimization}{29}{subsection.A.2.3}
+\contentsline {subsection}{\numberline {A.2.4}Properties of softmax regression parameterization}{29}{subsection.A.2.4}
+\contentsline {subsection}{\numberline {A.2.5}Relationship to Logistic Regression}{30}{subsection.A.2.5}
+\contentsline {subsection}{\numberline {A.2.6}Vectorial representations}{31}{subsection.A.2.6}
+\contentsline {section}{\numberline {A.3}Multilabel case: 'multi-binary' regression}{31}{section.A.3}
+\contentsline {subsection}{\numberline {A.3.1}Model}{31}{subsection.A.3.1}
+\contentsline {subsection}{\numberline {A.3.2}Objective}{32}{subsection.A.3.2}
+\contentsline {chapter}{\numberline {B}Binary classification metrics}{37}{appendix.B}
