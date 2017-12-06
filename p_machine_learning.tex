@@ -5,13 +5,44 @@
 
 
 \section{Natural Language Processing}
+
+When dealing with natural language, one of most important common denominator is how we represent words as input to any of our models. How do we transform sentences/words into numerical vectors.
+
+In this section, we will quickly describe Mikolov's Word2Vec models (Continuous Bag of Word, and Skip-Gram), that proposed a new way to build word embeddings based on words coocurrence in a context window.
+
+Then we will explain in more detail recent work from Facebook, that propose new models based on Mikolov's work, allowing the use of sub-word information, and proposing a novel way to compute classification tasks while learning embeddings.
+
 \subsection{Word2Vec models}
 
-When dealing with natural language, one of the main challenges is to  
+Word2vec can utilize either of two model architectures to produce a distributed representation of words: continuous bag-of-words (CBOW) or continuous skip-gram. In the continuous bag-of-words architecture, the model predicts the current word from a window of surrounding context words. The order of context words does not influence prediction (bag-of-words assumption). In the continuous skip-gram architecture, the model uses the current word to predict the surrounding window of context words. The skip-gram architecture weighs nearby context words more heavily than more distant context words.
+
 \subsubsection*{Continuous Bag of Words}
 \subsubsection*{Skip-Gram}
 
 \subsection{Fasttext}
+
+
+
+Word2Vec treats each word in corpus like an atomic entity and generates a vector for each word. It treats words as the smallest unit to train on. 
+
+Fasttext (which is essentially an extension of word2vec model), treats each word as composed of character ngrams. So the vector for a word is made of the sum of this character n grams. For example the word vector “apple” is a sum of the vectors of the n-grams “<ap”, “app”, ”appl”, ”apple”, ”apple>”, “ppl”, “pple”, ”pple>”, “ple”, ”ple>”, ”le>” (assuming hyperparameters for smallest ngram[minn] is 3 and largest ngram[maxn] is 6). 
+
+This difference manifests as follows.
+
+\begin{itemize}
+	\item Generate better word embeddings for rare words ( even if words are rare their character n grams are still shared with other words - hence the embeddings can still be good).
+	This is simply because, in word2vec a rare word (e.g. 10 occurrences) has fewer neighbors to be tugged by, in comparison to a word that occurs 100 times - the latter has more neighbor context words and hence is tugged more often resulting in better word vectors.
+
+	\item Out of vocabulary words - they can construct the vector for a word from its character n grams even if word doesn't appear in training corpus. Both Word2vec and Glove can't.
+	From a practical usage standpoint, the choice of hyperparamters for generating fasttext embeddings becomes key
+	since the training is at character n-gram level, it takes longer to generate fasttext embeddings compared to word2vec - the choice of hyper parameters controlling the minimum and maximum n-gram sizes has a direct bearing on this time.
+
+	\item Simulatenous embedding and classification learning: in Word2Vec, we first build our embeddings, and then use it to translate words in features of low dimensionality for further classification. In fasttext, embedding and classification are different layers of a neural network that are trained simultaneously.
+\end{itemize}
+
+
+\cite[Enriching Word Vectors with Subword Information]{fasttextEnriching}
+\cite[Bag of Tricks for Efficient Text Classification]{fasttextTricks}
 
 \subsubsection{Model}
 Suppose a previous layer $h$ (taking a vector x of given size in ouput space of size d) as follow:
@@ -289,29 +320,17 @@ Lets define some naming/metrics used in the following:
 
 Precision, recall and accuracy are often used to measure the classification quality of binary classifiers.
 
-In customer churn prediction, the misclassification of a churner may result in the loss of the customer but the misclassification of a non-churner may result in some extra marketing cost.  Because the former is more costly than the latter, recall is a more important measure than precision \cite{VdP05}.
-While precision and recall measure how accurate the methods can identify the observations in a single class, the AUC measures how well the methods discriminate the two classes.
-
-Precision measures that fraction of examples classified as churner that are truly churner.
-
-Recall measures the fraction of well classified churners.
-
-
-The problem of churn differs from classical classification/prediction setups, notably in the objectives to optimize on. Although having a good recall, for instance, is important (we want as many churners well classified as possible), one should really take into account the \textit{business application}: a typical use of a churn prediction model is to target potential future churners and to launch a marketing campaign to retain them. In such cases, we are willing to tolerate greater overall error, in return for better identifying the most likely future churners for further attention.
-
-Contacting a large proportion of the customers is expensive: one wants to maximize the number of potential churners reached while minimizing the total number of contacted customers. Metrics such as \textit{lift} (\ref{sub:lift}) express very well this business application constraint.
-
 
 \textbf{F-score}
 
 The $F_1$ is a measure of a classifier accuracy, computed as the harmonic mean of precision and recall: $$F_1= 2. \frac{precision.recall}{precision+recall}$$\tabularnewline
-This definition assign the same weight to precision and recall but in our case, recall is more valuable than precision: we want all the churners to be correctly classified and type I error has less monetary impact (people may be targeted for a marketing campaign even if they weren't about to churn).
+This definition assign the same weight to precision and recall but depending on the problem, one can be more valuable than the other.
 
 To handle these constraints, the $F_\beta-score$ is adapted: in consists in the \textit{weighted} harmonic mean of recall and precision, assigning $\beta$ times as much importance to recall as precision: $$F_\beta = (1+\beta^2) \frac{precision.recall}{\beta^2.precision+recall}$$
 
 \textbf{Calibration plot} 
 
-When dealing with probabilistic classifiers, one of the signs that a suitable classification model has been found is also that predicted probabilities (scores) are well calibrated, that is that a fraction of about $p$ of events with predicted probability $p$ actually occurs. Calibration plot is a method that shows us how well the classifier is calibrated \cite{VC06}: $$x = true\ probability,\ y=predicted\ probability$$
+When dealing with probabilistic classifiers, one of the signs that a suitable classification model has been found is also that predicted probabilities (scores) are well calibrated, that is that a fraction of about $p$ of events with predicted probability $p$ actually occurs. Calibration plot is a method that shows us how well the classifier is calibrated \cite{Calibration}: $$x = true\ probability,\ y=predicted\ probability$$
 
 True probabilities are calculated for (sub)sets of examples with the same predicted score $P(y=1|X) \in [c-\delta, c+\delta]$: $$ p_{true}^c = \frac{P_{sub}^c}{P_{sub}^c + N_{sub}^c}$$ with $P_{sub}^c, N_{sub}^c$ being the proportion on positives and negative examples in a given subset with predicted probabilities $[c-\delta, c+\delta]$. The calibration plot of a perfectly calibrated classifier will be a diagonal.
 
