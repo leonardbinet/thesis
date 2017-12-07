@@ -2,9 +2,7 @@
 \label{cha:results}
 
 
-
-
-\section{Natural Language Processing}
+\section{Natural Language Processing Classification}
 
 When dealing with natural language, one of most important common denominator is how we represent words as input to any of our models. How do we transform sentences/words into numerical vectors.
 
@@ -12,20 +10,269 @@ In this section, we will quickly describe Mikolov's Word2Vec models (Continuous 
 
 Then we will explain in more detail recent work from Facebook, that propose new models based on Mikolov's work, allowing the use of sub-word information, and proposing a novel way to compute classification tasks while learning embeddings.
 
+\subsection{Probability of sequence of tokens}
+
+One solution to extract information from corpus of text is to build a model that will assign a probability to a sequence of tokens. 
+
+Let's consider the following sentence: \say{\textit{To classify you have to learn.}}
+
+A good language model will give this sentence a high probability because this is a completely valid sentence, syntactically and semantically.
+
+Similarly, the sentence \say{Before car bird eating sea.} should have a very low probability because it makes no sense. 
+
+Mathematically, we can call this probability on any given sequence of n words:
+
+\begin{align}
+	P(\textit{'To'},\textit{'classify'}, ..., \textit{'learn'}) = P(w_1, w_2, ..., w_n)
+\end{align}
+
+To make sense, we would like sentences of a given corpus to have a high probability.
+
+Let's introduce the notations for this section:
+
+{\ttfamily
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ll}
+        \toprule
+        $V$       	   	 &    the ordered vocabulary \\
+        $T$    		   	 &    the size of corpus \\
+        $w_i$          	 &    the i-th word in corpus \\
+        $V(w_{i}) = *i$       &    the index of i-th word of corpus in vocabulary V\\
+        $C_t^{(c)}$      &    the context of t-th word in corpus, for window of size $c$: $w_{t-c}, ..., w_{t-1}, w_{t+1}, ... ,w_{t+c}$\\
+		$\mathbf{x}_i$ 				& one hot word vector corresponding i-th word in vocabulary $V$ \\
+        $\mathbf{x}_{(C_t^{(c)})}$ 	& the average of all one hot vectors of words in context $C_t^{(c)}$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+}
+
+With:
+\begin{align}
+	v_1 &= 
+	\begin{bmatrix} 
+		1 \\
+		0 \\
+		\vdots\\
+		0
+	\end{bmatrix}
+	v_{*1} = 
+	\begin{bmatrix} 
+		0 \\
+		1 \\
+		\vdots\\
+		0
+	\end{bmatrix}
+	\textnormal{if } *1 = V(w_1) = 2\\
+	\mathbf{x}_{(C_t^{(c)})} &= \frac{\mathbf{x}_{*(t-c)} + \mathbf{x}_{*(t-c+1)} ... + \mathbf{x}_{*(t+c)}}{|C_t^{(c)}|}
+\end{align}
+
+Taking our corpus \say{\textit{To classify you have to learn.}}:
+
+\begin{itemize}
+	\item our corpus is of size: $T=6$
+	\item our vocabulary is: $V =$ (to, classify, you, have, learn), an ordered list of size $|V| = 5$ (word \textbf{to} is present twice in corpus)
+	\item $w_5$ is word \textbf{to}, indexed in vocabulary as $*5 = V(w_5) = 1$ (first word of vocabulary)
+	\item $\mathbf{x}_{*5} = \begin{bmatrix} 
+		1 \\
+		0 \\
+		\vdots\\
+		0
+	\end{bmatrix}$
+	\item $C_3^{(2)}$ is context of word \textbf{you} with window of size 2: \{to, classify, have, to\}
+	\item $x_{(C_3^{(2)})} = 
+	(\mathbf{x}_{*1} +\mathbf{x}_{*2} + \mathbf{x}_{*4} + \mathbf{x}_{*5}) / 4 = (\mathbf{x}_{1} +\mathbf{x}_{2} + \mathbf{x}_{4} + \mathbf{x}_{1}) / 4
+	=\begin{bmatrix} 
+		1/2 \\
+		1/4 \\
+		0\\
+		1/4\\
+		0
+	\end{bmatrix}$
+\end{itemize}
+
+
 \subsection{Word2Vec models}
 
-Word2vec can utilize either of two model architectures to produce a distributed representation of words: continuous bag-of-words (CBOW) or continuous skip-gram. In the continuous bag-of-words architecture, the model predicts the current word from a window of surrounding context words. The order of context words does not influence prediction (bag-of-words assumption). In the continuous skip-gram architecture, the model uses the current word to predict the surrounding window of context words. The skip-gram architecture weighs nearby context words more heavily than more distant context words.
+Word2vec can utilize either of two model architectures to produce a representation of words: \textbf{continuous bag-of-words} (CBOW) or \textbf{skip-gram}. 
 
-\subsubsection*{Continuous Bag of Words}
-\subsubsection*{Skip-Gram}
+In the continuous bag-of-words architecture, the model predicts the current word from a window of surrounding context words. The order of context words does not influence prediction (bag-of-words assumption). In the continuous skip-gram architecture, the model uses the current word to predict the surrounding window of context words. 
+The skip-gram architecture weighs nearby context words more heavily than more distant context words.
+
+Both models can be trained from an unlabeled large corpus of text and rely on the same trick: transform unlabeled data into a labeled dataset for supervised learning to unveil hidden dependencies between words.
+
+Since these two models are quite similar, we will only describe in detail the CBOW in this section.
+
+\subsubsection{CBOW}
+
+In the CBOW model, we try to maximize the likelihood occurence of a word given its context, for a given window size.
+
+Taking our previous corpus: \say{\textit{To classify you have to learn.}}
+
+
+With a context window of size 2, we can extract many labeled samples:
+\begin{itemize}
+	\item \textbf{context}: \{classify, you\}, \textbf{target}: to
+	\item \textbf{context}: \{to, you, have\}, \textbf{target}: classify
+	\item \textbf{context}: \{to, classify, have, to\}, \textbf{target}: you
+	\item ...
+	\item \textbf{context}: \{have, to\}, \textbf{target}: learn
+\end{itemize}
+
+
+Mathematically, with $w_t$ our target word, $c$ the size of our context window, the probability of our target word given the context can be written as:
+
+\begin{align}
+	P(w_t | w_{t-c}, ..., w_{t-1}, w_{t+1}, ... ,w_{t+c}) = P(w_t | C_t^{(c)})
+\end{align}
+
+Given a word vocabulary of size $V$, where a word is identified by its index $w~\in~\{1, ..., V\}$, the goal is to learn a vectorial representation for each word $w$. Word representations are trained to \emph{predict well} words that appear in its context.
+
+So given a large training corpus represented as a sequence of words $w_1, ..., w_T$, the objective of the CBOW model is to maximize the following log-likelihood:
+\begin{equation*}
+  \sum_{t=1}^T \ \log P(w_t \ | \ \mathcal{C}_t^{(c)}),
+\end{equation*}
+
+\textbf{Parametrization and model}
+
+The probability of observing a context word $w_t$ given $\mathcal{C}_t^{(c)}$ will be parameterized using the aforementioned word vectors.
+
+We create two matrices $A \in \mathbb{R}^{dim \times |V|}$ and $B \in \mathbb{R}^{|V| \times dim}$, where $dim$ is an arbitrary size which defines the size of our embedding space.
+
+$A$ is the input word matrix such that the *i-th column of $A$ is the dim-dimensional embedded vector for word $w_{i}$ when it is an input to this model. 
+Similarly, B is the output word matrix. The *j-th row of B is an dim-dimensional embedded vector for word $w_j$ when it is an output of the model. 
+
+
+
+Let's introduce some new notations:
+
+{\ttfamily
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ll}
+        \toprule
+        $dim$ 				& choosen size for our embeddings \\
+        $A$ 				& input word matrix $\in \mathbb{R}^{dim \times |V|}$ \\
+        $B$ 				& output word matrix $\in \mathbb{R}^{|V| \times dim}$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+}
+
+In CBOW we define the probability of occurence of words each word of the vocabulary, given a context $\mathcal{C}_t^{(c)}$ (our model), as:
+
+\begin{align}
+ \mathbf{\hat y}_t = 
+ 	\begin{bmatrix} 
+		\hat y_t^{(1)} \\
+		\vdots \\
+		\hat y_t^{(t)}\\
+		\vdots \\
+		\hat y_t^{(|V|)}
+	\end{bmatrix}  
+	= 
+	\begin{bmatrix} 
+		P(w_1 | \mathcal{C}_t^{(c)}) \\
+		\vdots \\
+		P(w_t | \mathcal{C}_t^{(c)})\\
+		\vdots \\
+		P(w_{|V|} | \mathcal{C}_t^{(c)})
+	\end{bmatrix} = 
+	\frac{e^{B.A.\mathbf{x}_{(\mathcal{C}_t^{(c)})}}}
+	{\sum_{j=1}^{|V|} e^{B.A.x_{(\mathcal{C}_j^{(c)})}}}
+\end{align}
+
+Whereas the true target is noted:
+\begin{align}
+ \mathbf{y}_t = 
+	\begin{bmatrix} 
+		0 \\
+		\vdots \\
+		1 \\
+		\vdots \\
+		0
+	\end{bmatrix} 
+	= \mathbf{x}_t
+\end{align}
+
+
+Maximizing log-likelihood of $P(w_t | \mathcal{C}_t^{(c)})$ is equivalent to minimizing the cross entropy:
+\begin{align}
+E(\mathbf{\hat y}_t, \mathbf{y}_t) &= - \mathbf{y}_t^{\top} log(\mathbf{\hat y}_t) = - log(P(w_t | \mathcal{C}_t^{(c)}))
+\end{align}
+Because $\mathbf{y}_t$ is a one-hot vector.
+
+
+We can represent it as the following multilayer network:
+
+\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep]
+    \tikzstyle{every pin edge}=[<-,shorten <=1pt]
+    \tikzstyle{neuron}=[circle,fill=black!25,minimum size=17pt,inner sep=0pt]
+    \tikzstyle{input neuron}=[neuron, fill=yellow!50];
+    \tikzstyle{output neuron}=[neuron, fill=blue!50];
+    \tikzstyle{hidden neuron}=[neuron, fill=red!50];
+    \tikzstyle{true neuron}=[neuron, fill=green!50];
+    \tikzstyle{annot} = [text width=4em, text centered]
+
+    % Draw the input layer nodes
+    \foreach \name / \y in {1,...,5}
+    % This is the same as writing \foreach \name / \y in {1/1,2/2,3/3,4/4}
+        \node[input neuron, pin=left:$x_{\y}$ ] (I-\name) at (0,-0.5 -\y) {};
+
+    % Draw the hidden layer nodes
+    \foreach \name / \y in {1,...,3}
+        \node[hidden neuron] (H-\name) at (\layersep,-1 -\y) {};
+    
+    % Draw the output layer node
+
+	\foreach \name / \y in {1,...,5}
+        \node[output neuron, pin=right:$f_{\y}$ ] (O-\name) at (\layersep*2,-0.5 -\y) {};
+
+    % Draw the true layer node
+
+	\foreach \name / \y in {1,...,5}
+        \node[true neuron, pin=right:$y_{\y}$ ] (T-\name) at (\layersep*3,-0.5 -\y) {};
+
+
+    % Connect every node in the input layer with every node in the
+    % hidden layer.
+    \foreach \source in {1,...,5}
+        \foreach \dest in {1,...,3}
+            \path (I-\source) edge (H-\dest);
+
+    % Connect every node in the hidden layer with the output layer
+    \foreach \source in {1,...,3}
+        \foreach \dest in {1,...,5}
+	        \path (H-\source) edge (O-\dest);
+
+    % Annotate the layers
+    \node[annot,above of=H-1, node distance=2.5cm] (hl) {Hidden layer: $h$ of size \textit{dim}};
+    \node[annot,left of=hl] {Input layer: $x$ (size $V$)};
+    \node[annot,right of=hl] (ol) {Output layer: $f$ of size $V$};
+    \node[annot,right of=ol] {Target: $y$ of size $V$};
+
+    \node[annot] (A) at (\layersep/2,-5) {$A$};
+    \node[annot] (B) at (\layersep*3/2,-5) {$B$};
+
+\end{tikzpicture}
+
+
+\subsubsection{Using CBOW embeddings for classification}
+
 
 \subsection{Fasttext}
 
-
+Fasttext, which is essentially an extension of word2vec model, brings two major changes:
+\begin{itemize}
+	\item use of subword word information, instead of treating only word entities
+	\item embedding and classification merge in a single model (specializing embeddings for specific classification task)
+\end{itemize}
 
 Word2Vec treats each word in corpus like an atomic entity and generates a vector for each word. It treats words as the smallest unit to train on. 
 
-Fasttext (which is essentially an extension of word2vec model), treats each word as composed of character ngrams. So the vector for a word is made of the sum of this character n grams. For example the word vector “apple” is a sum of the vectors of the n-grams “<ap”, “app”, ”appl”, ”apple”, ”apple>”, “ppl”, “pple”, ”pple>”, “ple”, ”ple>”, ”le>” (assuming hyperparameters for smallest ngram[minn] is 3 and largest ngram[maxn] is 6). 
+\textbf{Subword information}
+
+Each word can be considered as a set of character ngrams. In Fasttext, a word vector is made of the sum of this character n grams. For example the word vector “apple” is a sum of the vectors of the n-grams “<ap”, “app”, ”appl”, ”apple”, ”apple>”, “ppl”, “pple”, ”pple>”, “ple”, ”ple>”, ”le>” (assuming hyperparameters for smallest ngram[minn] is 3 and largest ngram[maxn] is 6).
 
 This difference manifests as follows.
 
@@ -44,7 +291,7 @@ This difference manifests as follows.
 \cite[Enriching Word Vectors with Subword Information]{fasttextEnriching}
 \cite[Bag of Tricks for Efficient Text Classification]{fasttextTricks}
 
-\subsubsection{Model}
+\subsubsection{Classification model}
 Suppose a previous layer $h$ (taking a vector x of given size in ouput space of size d) as follow:
 \begin{align}
 	h 
@@ -286,9 +533,14 @@ The learning rate $\mu$ decrease linearly, from initial given parameter $lr$ to 
 \pagebreak
 \section{Multilabel classification}
 \subsection{Review of major algorithms}
-\subsubsection{Problem Transformation Approaches}
-\subsubsection{Adaptative Approaches}
-\subsubsection{Neural network}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.45]{./images/machine-learning/multi-label-approaches.png}
+\caption{Categorization of representative multi-label learning algorithms being reviewed, \cite{MultilabelReview}.}
+\end{figure}
+
+\subsubsection{Neural network approach}
 
 \subsection{Multiclass/multilabel scoring metrics}
 \subsubsection{Regular binary metrics}
@@ -339,7 +591,7 @@ True probabilities are calculated for (sub)sets of examples with the same predic
 \subsubsection{Adaptation to multiclass-multilabel: global / local metrics}
 
 
-
+\pagebreak
 \section{Calibration}
 
 \subsection{Predictions precision/recall estimation}
