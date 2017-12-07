@@ -23,7 +23,7 @@ Similarly, the sentence \say{Before car bird eating sea.} should have a very low
 Mathematically, we can call this probability on any given sequence of n words:
 
 \begin{align}
-	P(\textit{'To'},\textit{'classify'}, ..., \textit{'learn'}) = P(w_1, w_2, ..., w_n)
+	P(\textit{'To'},\textit{'classify'}, ..., \textit{'learn'})
 \end{align}
 
 To make sense, we would like sentences of a given corpus to have a high probability.
@@ -38,7 +38,8 @@ Let's introduce the notations for this section:
         $V$       	   	 &    the ordered vocabulary \\
         $T$    		   	 &    the size of corpus \\
         $w_i$          	 &    the i-th word in corpus \\
-        $V(w_{i}) = *i$       &    the index of i-th word of corpus in vocabulary V\\
+        $w_{i^{(v)}}$          	 &    the i-th word in vocabulary \\
+        $*i = V(w_{i})$       &    the index of i-th word of corpus in vocabulary V, such as $ w_{i} = w_{*i^{(v)}}$\\
         $C_t^{(c)}$      &    the context of t-th word in corpus, for window of size $c$: $w_{t-c}, ..., w_{t-1}, w_{t+1}, ... ,w_{t+c}$\\
 		$\mathbf{x}_i$ 				& one hot word vector corresponding i-th word in vocabulary $V$ \\
         $\mathbf{x}_{(C_t^{(c)})}$ 	& the average of all one hot vectors of words in context $C_t^{(c)}$ \\
@@ -126,7 +127,7 @@ Mathematically, with $w_t$ our target word, $c$ the size of our context window, 
 	P(w_t | w_{t-c}, ..., w_{t-1}, w_{t+1}, ... ,w_{t+c}) = P(w_t | C_t^{(c)})
 \end{align}
 
-Given a word vocabulary of size $V$, where a word is identified by its index $w~\in~\{1, ..., V\}$, the goal is to learn a vectorial representation for each word $w$. Word representations are trained to \emph{predict well} words that appear in its context.
+Given a word vocabulary of size $V$, the goal is to learn a vectorial representation for each word $w$. Word representations are trained to \emph{predict well} words that appear in its context.
 
 So given a large training corpus represented as a sequence of words $w_1, ..., w_T$, the objective of the CBOW model is to maximize the following log-likelihood:
 \begin{equation*}
@@ -151,7 +152,7 @@ Let's introduce some new notations:
     \centering
     \begin{tabular}{ll}
         \toprule
-        $dim$ 				& choosen size for our embeddings \\
+        $dim$ 				& chosen size for our embeddings \\
         $A$ 				& input word matrix $\in \mathbb{R}^{dim \times |V|}$ \\
         $B$ 				& output word matrix $\in \mathbb{R}^{|V| \times dim}$ \\
         \bottomrule
@@ -159,28 +160,35 @@ Let's introduce some new notations:
 \end{table}
 }
 
-In CBOW we define the probability of occurence of words each word of the vocabulary, given a context $\mathcal{C}_t^{(c)}$ (our model), as:
+The input matrix A converts our encoded input bag of words ($\mathbf{x}_{(C_t^{(c)})}$) into a representation in a lower dimensionality.
+
+Let's denote our hidden representation:
+\begin{align}
+ \mathbf{h}_t = A.\mathbf{x}_{(\mathcal{C}_t^{(c)})}
+\end{align}
+
+Finally, this hidden representation will be decoded with the output matrix B to be able to compare it with our target word. Since we are in a single labeled multiclass case, the use of softmax function is adapted to sum our probabilities to 1. In short, in CBOW we define the probability of occurence of words each word of the vocabulary, given a context $\mathcal{C}_t^{(c)}$ (our model), as:
 
 \begin{align}
  \mathbf{\hat y}_t = 
- 	\begin{bmatrix} 
-		\hat y_t^{(1)} \\
-		\vdots \\
-		\hat y_t^{(t)}\\
-		\vdots \\
-		\hat y_t^{(|V|)}
-	\end{bmatrix}  
-	= 
 	\begin{bmatrix} 
-		P(w_1 | \mathcal{C}_t^{(c)}) \\
+		P(w_{1^{(v)}} | \mathcal{C}_t^{(c)}) \\
 		\vdots \\
-		P(w_t | \mathcal{C}_t^{(c)})\\
+		P(w_{t^{(v)}} | \mathcal{C}_t^{(c)})\\
 		\vdots \\
-		P(w_{|V|} | \mathcal{C}_t^{(c)})
+		P(w_{|V|^{(v)}} | \mathcal{C}_t^{(c)})
 	\end{bmatrix} = 
-	\frac{e^{B.A.\mathbf{x}_{(\mathcal{C}_t^{(c)})}}}
-	{\sum_{j=1}^{|V|} e^{B.A.x_{(\mathcal{C}_j^{(c)})}}}
+	softmax(B.A.\mathbf{x}_{(\mathcal{C}_t^{(c)})})
 \end{align}
+
+Ie $\forall i \in [1, |V|]$:
+\begin{align}
+ P(w_{i} | \mathcal{C}_t^{(c)})= 
+ 	&\frac{  [e^{B.A.\mathbf{x}_{(\mathcal{C}_t^{(c)})}}]_i}
+ 	{\sum_{j=1}^{|V|} [e^{B.A.x_{(\mathcal{C}_j^{(c)})}}]_i} \\
+ 	\text{      with}& []_i \text{ meaning the i-th element of a vector}
+\end{align}
+
 
 Whereas the true target is noted:
 \begin{align}
@@ -196,12 +204,10 @@ Whereas the true target is noted:
 \end{align}
 
 
-Maximizing log-likelihood of $P(w_t | \mathcal{C}_t^{(c)})$ is equivalent to minimizing the cross entropy:
+Since $\mathbf{y}_t$ is a one-hot vector, maximizing log-likelihood of $P(w_t | \mathcal{C}_t^{(c)})$ is equivalent to minimizing the cross entropy of $(\mathbf{\hat y}_t, \mathbf{y}_t)$:
 \begin{align}
 E(\mathbf{\hat y}_t, \mathbf{y}_t) &= - \mathbf{y}_t^{\top} log(\mathbf{\hat y}_t) = - log(P(w_t | \mathcal{C}_t^{(c)}))
 \end{align}
-Because $\mathbf{y}_t$ is a one-hot vector.
-
 
 We can represent it as the following multilayer network:
 
@@ -215,9 +221,9 @@ We can represent it as the following multilayer network:
     \tikzstyle{annot} = [text width=4em, text centered]
 
     % Draw the input layer nodes
-    \foreach \name / \y in {1,...,5}
+    \foreach \name / \y / \word in {1/1/to,2/2/classify,3/3/you,4/4/have,5/5/learn}
     % This is the same as writing \foreach \name / \y in {1/1,2/2,3/3,4/4}
-        \node[input neuron, pin=left:$x_{\y}$ ] (I-\name) at (0,-0.5 -\y) {};
+        \node[input neuron, pin=left: (\textit{\word}) $x_{\y}$ ] (I-\name) at (0,-0.5 -\y) {};
 
     % Draw the hidden layer nodes
     \foreach \name / \y in {1,...,3}
@@ -226,7 +232,7 @@ We can represent it as the following multilayer network:
     % Draw the output layer node
 
 	\foreach \name / \y in {1,...,5}
-        \node[output neuron, pin=right:$f_{\y}$ ] (O-\name) at (\layersep*2,-0.5 -\y) {};
+        \node[output neuron, pin=right:$\hat y_{\y}$ ] (O-\name) at (\layersep*2,-0.5 -\y) {};
 
     % Draw the true layer node
 
@@ -247,45 +253,56 @@ We can represent it as the following multilayer network:
 
     % Annotate the layers
     \node[annot,above of=H-1, node distance=2.5cm] (hl) {Hidden layer: $h$ of size \textit{dim}};
-    \node[annot,left of=hl] {Input layer: $x$ (size $V$)};
-    \node[annot,right of=hl] (ol) {Output layer: $f$ of size $V$};
-    \node[annot,right of=ol] {Target: $y$ of size $V$};
+    \node[annot,left of=hl] {Input layer: $x$ (size $|V|$)};
+    \node[annot,right of=hl] (ol) {Output layer: $\hat y$ of size $|V|$};
+    \node[annot,right of=ol] {Target: $y$ of size $|V|$};
 
     \node[annot] (A) at (\layersep/2,-5) {$A$};
     \node[annot] (B) at (\layersep*3/2,-5) {$B$};
 
 \end{tikzpicture}
 
+Matrices A and B are updated using gradient descent and gradient retro-propagation. Update formulas can be found in \cite{yolo}
 
 \subsubsection{Using CBOW embeddings for classification}
 
+Using CBOW algorithm would provide you this A matrix, which is basically a lookup table in which you can extract the representation of any word of your vocabulary in your embedding space (of size $dim <<< |V|$).
+
+Word2Vec treats each word in corpus like an atomic entity and generates a vector for each word.
+
+Transforming a text input in a numerical vector is then possible, and your numerical vector could then be used as input for any classification algorigthm to perform classification tasks.
 
 \subsection{Fasttext}
 
-Fasttext, which is essentially an extension of word2vec model, brings two major changes:
+Fasttext, which is essentially an extension of word2vec model, brings two major conceptual changes (in addition to a very efficient C++ implementation):
 \begin{itemize}
-	\item use of subword word information, instead of treating only word entities
-	\item embedding and classification merge in a single model (specializing embeddings for specific classification task)
+	\item use of subword word information, instead of treating only word entities, which provides the following benefits:
+	\begin{itemize}
+		\item Generate better word embeddings for rare words (even if words are rare their character n grams are still shared with other words - hence the embeddings can still be good). In word2vec a rare word (e.g. 10 occurrences) has fewer neighbors to be tugged by, in comparison to a word that occurs 100 times - the latter has more neighbor context words and hence is tugged more often resulting in better word vectors.
+		\item Out of vocabulary words - they can construct the vector for a word from its character n grams even if word doesn't appear in training corpus. The choice of hyper parameters controlling the minimum and maximum n-gram sizes has to be chosen.
+	\end{itemize}
+	\item Simulatenous embedding and classification learning: in Word2Vec, we first build our embeddings, and then use it to translate words in features of low dimensionality for further classification. In fasttext, embedding and classification are different layers of a neural network that are trained simultaneously.
 \end{itemize}
-
-Word2Vec treats each word in corpus like an atomic entity and generates a vector for each word. It treats words as the smallest unit to train on. 
 
 \textbf{Subword information}
 
-Each word can be considered as a set of character ngrams. In Fasttext, a word vector is made of the sum of this character n grams. For example the word vector “apple” is a sum of the vectors of the n-grams “<ap”, “app”, ”appl”, ”apple”, ”apple>”, “ppl”, “pple”, ”pple>”, “ple”, ”ple>”, ”le>” (assuming hyperparameters for smallest ngram[minn] is 3 and largest ngram[maxn] is 6).
-
-This difference manifests as follows.
-
+Each word can be considered as a set of character ngrams. In Fasttext, a word vector is made of the sum of this character n grams. For example the word vector “apple” is a sum of the vectors of the n-grams:
+\begin{multicols}{3}
 \begin{itemize}
-	\item Generate better word embeddings for rare words ( even if words are rare their character n grams are still shared with other words - hence the embeddings can still be good).
-	This is simply because, in word2vec a rare word (e.g. 10 occurrences) has fewer neighbors to be tugged by, in comparison to a word that occurs 100 times - the latter has more neighbor context words and hence is tugged more often resulting in better word vectors.
-
-	\item Out of vocabulary words - they can construct the vector for a word from its character n grams even if word doesn't appear in training corpus. Both Word2vec and Glove can't.
-	From a practical usage standpoint, the choice of hyperparamters for generating fasttext embeddings becomes key
-	since the training is at character n-gram level, it takes longer to generate fasttext embeddings compared to word2vec - the choice of hyper parameters controlling the minimum and maximum n-gram sizes has a direct bearing on this time.
-
-	\item Simulatenous embedding and classification learning: in Word2Vec, we first build our embeddings, and then use it to translate words in features of low dimensionality for further classification. In fasttext, embedding and classification are different layers of a neural network that are trained simultaneously.
+	\item “<ap”, 
+	\item “app”, 
+	\item ”appl”, 
+	\item ”apple”, 
+	\item ”apple>”, 
+	\item “ppl”, 
+	\item “pple”, 
+	\item ”pple>”, 
+	\item “ple”, 
+	\item ”ple>”, 
+	\item ”le>”
 \end{itemize}
+\end{multicols}
+ (assuming hyperparameters for smallest ngram[minn] is 3 and largest ngram[maxn] is 6).
 
 
 \cite[Enriching Word Vectors with Subword Information]{fasttextEnriching}
