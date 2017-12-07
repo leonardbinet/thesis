@@ -2,6 +2,12 @@
 \label{cha:multilabel_classification}
 
 
+This appendix details how binary logistic regression can be extended to multiclass classification, and then multilabel classification.
+
+The first two chapters are mainly taken from \cite{stanfordLogistic}, the last chapter one about multi-label generalization is from my own writing.
+
+Even though nothing is new, I felt the need to write this while I was reviewing multilabel learning approaches. In \cite{MultilabelReview}, two main approaches are reviewed, problem transforming methods (PT), and adaptative methods. The multilabel logistic regression seems to be in the adaptative methods (even though it is directly derived from PT binary relevance approach, it differs in that the algorithm can be modified, and gradients used for retropropagation), but was not referenced as so. I thus decided to write down formally this section.
+
 \section*{Common notations}
 
 
