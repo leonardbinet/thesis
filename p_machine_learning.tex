@@ -74,7 +74,7 @@ Taking our corpus \say{\textit{To classify you have to learn.}}:
 	\item our corpus is of size: $T=6$
 	\item our vocabulary is: $V =$ (to, classify, you, have, learn), an ordered list of size $|V| = 5$ (word \textbf{to} is present twice in corpus)
 	\item $w_5$ is word \textbf{to}, indexed in vocabulary as $*5 = V(w_5) = 1$ (first word of vocabulary)
-	\item $\mathbf{x}_{*5} = \begin{bmatrix} 
+	\item $\mathbf{x}_{*5} = \mathbf{x}_{1} = \begin{bmatrix} 
 		1 \\
 		0 \\
 		\vdots\\
@@ -250,9 +250,9 @@ We can represent it as the following multilayer network:
 	        \path (H-\source) edge (O-\dest);
 
     % Annotate the layers
-    \node[annot,above of=H-1, node distance=2.5cm] (hl) {Hidden layer: $h$ of size \textit{dim}};
+    \node[annot,above of=H-1, node distance=2.5cm] (hl) {Hidden layer: $\mathbf{h}$ of size \textit{dim}};
     \node[annot,left of=hl] {Input layer: $\mathbf{x}$ (size $|V|$)};
-    \node[annot,right of=hl] (ol) {Output layer: $\hat y$ of size $|V|$};
+    \node[annot,right of=hl] (ol) {Output layer: $\mathbf{\hat y}$ of size $|V|$};
     \node[annot,right of=ol] {Target: $\mathbf{y}$ one hot vector of size $|V|$};
 
     \node[annot] (A) at (\layersep/2,-5) {$A$};
@@ -296,8 +296,16 @@ What fasttext does, is that instead of first learning word embeddings on a corpu
 
 Denoting $\mathcal{Y} = \{y_i\}_{i \in [1, K]}$, and $\mathbf{x}$ the average of one hot-encoded vector of tokens of a feature in vocabulary $V$:
 \begin{align}
- \mathbf{\hat y} = 
+ \mathbf{\hat y} 
+ = 
 	\begin{bmatrix} 
+		\hat y_1 \\
+		\vdots \\
+		\hat y_i\\
+		\vdots \\
+		\hat y_K
+	\end{bmatrix} 
+ =	\begin{bmatrix} 
 		P(y_1 | \mathbf{x}) \\
 		\vdots \\
 		P(y_i | \mathbf{x})\\
@@ -350,15 +358,13 @@ The model is very similar to continuous bag of words model, except that instead 
 
     % Draw the output layer node
 	\foreach \name / \y in {1,...,4}
-        \node[output neuron, pin=right:$f_{\y}$ ] (O-\name) at (\layersep*2,-0.5 -\y) {};
+        \node[output neuron, pin=right:$\hat y_{\y}$ ] (O-\name) at (\layersep*2,-0.5 -\y) {};
 
     % Draw the true layer node
-
 	\foreach \name / \y / \label in {1/1/happy,2/2/neutral, 3/3/curious,4/4/angry}
         \node[true neuron, pin=right:$y_{\y}$ (\textit{  \label})] (T-\name) at (\layersep*3,-0.5 -\y) {};
 
-    % Connect every node in the input layer with every node in the
-    % hidden layer.
+    % Connect every node in the input layer with every node in the hidden layer.
     \foreach \source in {1,...,7}
         \foreach \dest in {1,...,3}
             \path (I-\source) edge (H-\dest);
@@ -369,9 +375,9 @@ The model is very similar to continuous bag of words model, except that instead 
 	        \path (H-\source) edge (O-\dest);
 
     % Annotate the layers
-    \node[annot,above of=H-1, node distance=2.5cm] (hl) {Hidden layer: $h$ of size \textit{dim}};
+    \node[annot,above of=H-1, node distance=2.5cm] (hl) {Hidden layer: $\mathbf{h}$ of size \textit{dim}};
     \node[annot,left of=hl] {Input layer: $\mathbf{x}$ (size $|V|$)};
-    \node[annot,right of=hl] (ol) {Output layer: $f$ of size $K$};
+    \node[annot,right of=hl] (ol) {Output layer: $\mathbf{\hat y}$ of size $K$};
     \node[annot,right of=ol] {Target: one hot vector $\mathbf{y}$ of size $K$};
 
     \node[annot] (A) at (\layersep/2,-6) {$A$};
@@ -384,6 +390,7 @@ Note:
 	\item fasttext first merge all features as one corpus to build vocabulary ($\rightarrow$ size of matrix A)
 	\item in practice, dimension of the hidden layer is between 50 and 300
 	\item input matrix A embeddings are specialized for this classification task and may not behave well for another classification task
+	\item the target vector is exactly composed of one 1, and the rest of 0s (multi-class).
 \end{itemize}
 
 \textbf{Subword information}
@@ -455,7 +462,6 @@ The learning rate $\mu$ decrease linearly, from initial given parameter $lr$ to 
 
 
 
-
 \pagebreak
 \section{Multilabel classification}
 
@@ -463,90 +469,266 @@ We already studied in previous section how we could compute efficient multi-clas
 
 In this section, we will first make a quick review of the major algorithms and scoring metrics for multi-label classification, mainly based on the ~\cite[following paper]{MultilabelReview}. Then we will focus on another common approach in neural networks not detailed in the previous paper, that inspired us to modify fasttext algorithm to make it natively support multilabel classification.
 
-\subsection{Review on multi-label classification}
+
+\subsection{Multiclass/multilabel metrics}
+
+\subsubsection{Common metrics}
+
+Number of classes.
+
+Label cardinality: average number of labels per sample.
+
+Label density: average number of labels per example normalized by number of classes.
+
+Label diversity: the number of distinct label sets.
 
 \subsubsection{Scoring metrics}
 
 Multiclass classification metrics in appendix, here only multilabel versions we used.
 
-\subsubsection{Main approaches and algorithms}
+
+\subsection{Output size challenge}
+
+The key challenge of learning from multi-label data lies in the overwhelming size of output space, i.e. the number of label sets grows exponentially as the number of class labels increases. For example, for a label space with 20 class labels, the number of possible label sets would exceed one million.
+
+Existing strategies to label correlations exploitation can be categorized based on the order of correlations that the learning techniques have considered:
+\begin{itemize}
+	\item First-order strategy: The task of multi-label learning is tackled in a label-by-label style and thus ignoring co-existence of the other labels, such as decomposing the multi-label learning problem into a number of independent binary classification problems (one per label). 
+	\item Second-order strategy: The task of multi-label learning is tackled by considering pairwise relations between labels, such as the ranking between relevant label and irrelevant label , or interaction between any pair of labels, etc.
+	\item High-order strategy: The task of multi-label learning is tackled by considering high-order relations among labels such as imposing all other labels’ influences on each label, or addressing connections among random subsets of labels, etc.
+\end{itemize}
+
+There is a compromise to find between taking into account correlations between labels, or choosing computational efficiency: the computational complexity quickly increase.
+
+\subsection{Multi-label learning algorithms}
+
+Multilabel strategies can be grouped in two main approaches: problem transformation methods or algorithm adaptation methods.
+
+Briefly, the key philosophy of problem transformation methods is to fit data to algorithm,
+while the key philosophy of algorithm adaptation methods is to fit algorithm to data. Figure ~\ref{fig:multilabelOverview}
+summarizes the algorithms detailed in \cite[Zhang and Zhou paper]{MultilabelReview}.
+
+\textbf{Algorithm adaptation methods}
+
+This category of algorithms tackle multi-label learning problem by adapting popular learning techniques to deal with multi-label data directly. Each technique is thus specific to one algorighm.
+Some adaptative algorithm exist for lazy learning techniques (kNN), decision tree techniques, kernel techniques (SVM), information-theoretic techniques (CRF).
+
+\textbf{Problem transformation methods}
+
+This category of algorithms tackle multi-label learning problem by transforming it into other well-established learning scenarios (binary or multiclass classification scenarios). 
+Representative algorithms include:
+\begin{itemize}
+ \item first-order approaches Binary Relevance which transform the task of multi-label learning into the task of binary classification 
+ \item high-order approach Classifier Chains which transform the task of multi-label learning into the task of binary classification 
+ \item secondorder approach Calibrated Label Ranking which transforms the task of multi-label learning into the task of label ranking
+ \item high-order approach Random k-labelsets which transforms the task of multi-label learning into the task of multi-class classification
+\end{itemize}
+
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.55]{./images/machine-learning/multi-label-approaches.png}
+\includegraphics[scale=0.6]{./images/machine-learning/multi-label-approaches.png}
 \caption{Categorization of representative multi-label learning algorithms being reviewed, \cite{MultilabelReview}.}
+\label{fig:multilabelOverview}
 \end{figure}
 
 
+\subsection{Considered approaches}
+
+In our case could, the possible approaches were:
+\begin{itemize}
+	\item 'Word Embedding / Multi-label Classification':
+	\begin{itemize}
+		\item first learn general purpose word embeddings
+		\item and then apply any multi-label classifier strategy
+	\end{itemize}
+	\item 'Fasttext / Problem Transform approach'
+	\begin{itemize}
+		\item use fasttext as binary/multiclass classifier
+		\item as input for a problem transform approach: binary relevance, random-k-labelsets (classifier chains was not adaptable to fasttext)
+	\end{itemize}
+	\item adapt fasttext to support multi-label: learn simultanously embeddings and classifier parameters in multilabel context
+\end{itemize}
+
+\subsubsection{Project constraints}
 
 
-\subsection{Neural network approach, how we adapted it to Fasttext}
+Our first experiments with Fasttext encouraged us to try to use it. Reasons for that choice were:
+\begin{itemize}
+	\item subword ability
+	\item encouraging scores
+	\item training speed
+\end{itemize}
 
-TODO: better introduce.
+Since we knew that the multi-labeled attributes we wanted to predict are insufficiently labeled, we wanted a fast to train model that could be computed regularly (daily). Because of the iterative improvement and daily evolution of our products data. 
 
-Suppose a previous layer $h$ (taking a vector x of given size in ouput space of size d) as follow:
+
+\subsection{How we adapted Fasttext to multilabel}
+
+Basically, the idea is to replace the last layer, from multiclass logistic regression to multi-binary logistic regression. Changes include:
+
+\begin{itemize}
+	\item the target vector is no longer one-hot encoded but can be any vector made of 0s and 1s.
+	\item instead of applying a softmax function to output scores, we apply the logistic/sigmoïd function
+	\item we use the logistic loss to update gradients
+\end{itemize}
+
+
+Denoting $\sigma$ the sigmoïd function:
+
+\begin{align}
+	\sigma(z) = \frac{1}{1 + \exp(-z)}
+\end{align}
+
+\begin{align}
+ \mathbf{\hat y}
+ 	= \begin{bmatrix} 
+		\hat y_1 \\
+		\vdots \\
+		\hat y_i\\
+		\vdots \\
+		\hat y_K
+	\end{bmatrix}
+	 = \begin{bmatrix} 
+		P(y_1 | \mathbf{x}) \\
+		\vdots \\
+		P(y_i | \mathbf{x})\\
+		\vdots \\
+		P(y_K | \mathbf{x})
+	\end{bmatrix} = 
+	\sigma(B.A.\mathbf{x})
+\end{align}
+
+For all $i \in [1, K]$: 
+\begin{align}
+	P(y_i | \mathbf{x}) &= \frac{1}{1 + e^{[B.A.x]_i}}\\
+		\text{      with } &[z]_i \text{ meaning the i-th element of a vector}
+\end{align}
+
+Whereas the true target is noted (binary vector):
+\begin{align}
+ \mathbf{y} = 
+	\begin{bmatrix} 
+		y_1 \\
+		\vdots \\
+		y_i \\
+		\vdots \\
+		y_K
+	\end{bmatrix}
+	= 
+	\begin{bmatrix} 
+		0 \\
+		1 \\
+		1 \\
+		\vdots \\
+		0
+	\end{bmatrix}  
+\end{align}
+
+Minimizing the following loss on one sample $(\mathbf{x}, \mathbf{y})$ is equivalent to maximizing log-likelihood, (based on the assumption that $\mathbf{y}$ components are independent, which is usually unfortunately false):
+
+\begin{align}
+	E = - \sum_{k=1}^K
+  			  	\left\{
+				    \begin{array}{ll}
+				        \log (\hat y_k) & \mbox{if } y_k =1 \\
+				        \log (1 - \hat y_k) & \mbox{if } y_k =0
+				    \end{array}
+				\right.
+\end{align}
+
+Demonstration is present in appendix A.
+
+\textbf{Neural network representation:}
+
+\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep]
+    \tikzstyle{every pin edge}=[<-,shorten <=1pt]
+    \tikzstyle{neuron}=[circle,fill=black!25,minimum size=17pt,inner sep=0pt]
+    \tikzstyle{input neuron}=[neuron, fill=yellow!50];
+    \tikzstyle{output neuron}=[neuron, fill=blue!50];
+    \tikzstyle{hidden neuron}=[neuron, fill=red!50];
+    \tikzstyle{true neuron}=[neuron, fill=green!50];
+    \tikzstyle{annot} = [text width=4em, text centered]
+
+    % Draw the input layer nodes
+    \foreach \name / \y / \word in {1/1/I,2/2/am,3/3/hungry,4/4/get,5/5/out, 6/6/nice, 7/7/apple}
+        \node[input neuron, pin=left:(\textit{\word  }) $x_{\y}$ ] (I-\name) at (0,-\y) {};
+
+    % Draw the hidden layer nodes
+    \foreach \name / \y in {1,...,3}
+        \node[hidden neuron] (H-\name) at (\layersep,-1 -\y) {};
+
+    % Draw the output layer node
+	\foreach \name / \y in {1,...,4}
+        \node[output neuron, pin=right:$\hat y_{\y}$ ] (O-\name) at (\layersep*2,-0.5 -\y) {};
+
+    % Draw the true layer node
+	\foreach \name / \y / \label in {1/1/happy,2/2/neutral, 3/3/curious,4/4/angry}
+        \node[true neuron, pin=right:$y_{\y}$ (\textit{  \label})] (T-\name) at (\layersep*3,-0.5 -\y) {};
+
+    % Connect every node in the input layer with every node in the hidden layer.
+    \foreach \source in {1,...,7}
+        \foreach \dest in {1,...,3}
+            \path (I-\source) edge (H-\dest);
+
+    % Connect every node in the hidden layer with the output layer
+    \foreach \source in {1,...,3}
+        \foreach \dest in {1,...,4}
+	        \path (H-\source) edge (O-\dest);
+
+    % Annotate the layers
+    \node[annot,above of=H-1, node distance=2.5cm] (hl) {Hidden layer: $\mathbf{h}$ of size \textit{dim}};
+    \node[annot,left of=hl] {Input layer: $\mathbf{x}$ (size $|V|$)};
+    \node[annot,right of=hl] (ol) {Output layer: $\mathbf{\hat y}$ of size $K$};
+    \node[annot,right of=ol] {Target: binary vector $\mathbf{y}$ of size $K$};
+
+    \node[annot] (A) at (\layersep/2,-6) {$A$};
+    \node[annot] (B) at (\layersep*3/2,-5) {$B$};
+
+\end{tikzpicture}
+
+
+\subsubsection{Gradient retropropagation}
+
+Let's introduce some more notations that will help to compute gradients.
+
 \begin{align}
 	\mathbf{h}
-	&= 
-	\begin{bmatrix} 
+	= \begin{bmatrix} 
 		h_1 \\
 		h_2 \\
 		\vdots \\
 		h_{\textit{dim}}
-	\end{bmatrix}\\ 
-	= A^{\top}\mathbf{x}
+	\end{bmatrix}
+	= A\mathbf{x}
 \end{align}
 
-
+With:
 \begin{align}
-	h_j = A^{(j)\top}\mathbf{x}
+	h_j = A^{(j)}\mathbf{x}
 \end{align}
 
 
 Let's denote:
 
 \begin{align}
-	s_k  = B^{(k)\top} h = \sum_{j=1}^{\textit{dim}} B^{(k)\top}_j h_j 
+	s_k  = B^{(k)} \mathbf{h} = \sum_{j=1}^{\textit{dim}} B^{(k)}_j h_j 
 \end{align}
 
-we can express $f$ as, $\forall k \in [1, K]$:
+we can then express $\hat y$ as, $\forall k \in [1, K]$:
 
 \begin{align}
-	f_k  = \sigma(s_k) = \sigma( \sum_{j=1}^{d} B^{(k)\top}_j h_j) 
+	\hat y_k  = \sigma(s_k) = \sigma( \sum_{j=1}^{d} B^{(k)}_j h_j) 
 \end{align}
 
-Lets consider the following error on one sample $(x, y)$:
+
+The gradient are:
 
 \begin{align}
-	E = - \sum_{k=1}^K
-  			  	\left\{
-				    \begin{array}{ll}
-				        \log (f_k) & \mbox{if } y_k =1 \\
-				        \log (1 - f_k) & \mbox{if } y_k =0
-				    \end{array}
-				\right.
-\end{align}
-
-This error is relevant since the minimization of this error is equivalent to maximizing the maximum of (log-)likelihood.
-Plus, it is interpretable: if the $k^{th}$ component $y_k$ is:
-\begin{itemize}
-	\item positive ($y_k=1$): then the loss increase if $f_k$ is near 0, and decrease if $f_k$ is near 1.
-	\item negative ($y_k=0$): then the loss decrease if $f_k$ is near 0, and increase if $f_k$ is near 1.
-\end{itemize}
-
-
-
-We can represent it as the following multilayer network:
-
-
-\subsubsection{Gradient retropropagation}
-
-
-\begin{align}
-	\frac{ \partial E } { \partial f_k } = 
+	\frac{ \partial E } { \partial \hat y_k } = 
 		\left\{
 		    \begin{array}{ll}
-		        - \frac{1}{f_k} & \mbox{if } y_k =1 \\
-		        \frac{1}{1 - f_k} & \mbox{if } y_k =0
+		        - \frac{1}{\hat y_k} & \mbox{if } y_k =1 \\
+		        \frac{1}{1 - \hat y_k} & \mbox{if } y_k =0
 		    \end{array}
 		\right.
 \end{align}
@@ -555,22 +737,22 @@ We can represent it as the following multilayer network:
 \begin{align}
 	\frac{ \partial E } { \partial s_k } 
 		=  
-		\frac{ \partial E } { \partial f_k } \cdot \frac{ \partial f_k } { \partial s_k } 
+		\frac{ \partial E } { \partial \hat y_k } \cdot \frac{ \partial \hat y_k } { \partial s_k } 
 		&=
 		\left\{
 		    \begin{array}{ll}
-		        - \frac{1}{f_k} \cdot f_k (1 - f_k)& \mbox{if } y_k =1 \\
-		        \frac{1}{1 - f_k} \cdot f_k (1 - f_k)& \mbox{if } y_k =0
+		        - \frac{1}{\hat y_k} \cdot \hat y_k (1 - \hat y_k)& \mbox{if } y_k =1 \\
+		        \frac{1}{1 - \hat y_k} \cdot \hat y_k (1 - \hat y_k)& \mbox{if } y_k =0
 		    \end{array}
 		\right. \\
 		&=
 		\left\{
 		    \begin{array}{ll}
-		       f_k - 1 & \mbox{if } y_k =1 \\
-		       f_k & \mbox{if } y_k =0
+		       \hat y_k - 1 & \mbox{if } y_k =1 \\
+		       \hat y_k & \mbox{if } y_k =0
 		    \end{array}
 		\right. \\
-		&= f_k - y_k
+		&= \hat y_k - y_k
 \end{align}
 
 
@@ -580,7 +762,7 @@ We can represent it as the following multilayer network:
 	= 
 	\frac{\partial E}{\partial s_k} \cdot \frac{\partial s_k}{\partial B_i^{(k)}} 
 	= 
-	h_i (f_k - y_k)
+	h_i (\hat y_k - y_k)
 \end{align}
 
 
@@ -590,7 +772,7 @@ Trick: derivate $E$ in regard to $s_k$:
 	&= 
 	\sum_{k=1}^K \frac{\partial E}{\partial s_k} \cdot \frac{\partial s_k}{\partial h_j} \\
 	&= 
-	\sum_{k=1}^K B_j^{(k)} (f_k - y_k)
+	\sum_{k=1}^K B_j^{(k)} (\hat y_k - y_k)
 \end{align}
 
 
@@ -599,17 +781,17 @@ Trick: derivate $E$ in regard to $s_k$:
 	&= 
 	\frac{\partial E}{\partial h_j} \cdot \frac{\partial h_j}{\partial A_i^{(j)}} \\
 	&= 
-	x_i \sum_{k=1}^K B_j^{(k)} (f_k - y_k)
+	x_i \sum_{k=1}^K B_j^{(k)} (\hat y_k - y_k)
 \end{align}
 
 
 \subsubsection*{Gradient descent}
 
-At each sample $(x, y)$, given a learning rate $\mu$, we update weight as follow:
+At each sample $(\mathbf{x}, \mathbf{y})$, given a learning rate $\mu$, we update weight as follow:
 
 $B$ weights:
 \begin{align}
-	B_i^{(k)\mbox{new}} \leftarrow B_i^{(k)\mbox{old}} - \mu (h_i (f_k - y_k))
+	B_i^{(k)\mbox{new}} \leftarrow B_i^{(k)\mbox{old}} - \mu (h_i (\hat y_k - y_k))
 \end{align}
 
 $A$ weights:
@@ -617,13 +799,9 @@ $A$ weights:
 	A_i^{(j)\mbox{new}} \leftarrow A_i^{(j)\mbox{old}} - 
 	\mu 
 	\left(
-		x_i \sum_{k=1}^K B_j^{(k)\mbox{new}} (f_k - y_k) 
+		x_i \sum_{k=1}^K B_j^{(k)\mbox{new}} (\hat y_k - y_k) 
 	\right)
 \end{align}
-
-
-
-\subsection{Multiclass/multilabel scoring metrics}
 
 
 
@@ -638,7 +816,54 @@ In this section we will first a naïve calibration implementation, and introduce
 
 \section{Missing labels}
 
+
 \subsection{Strategies to handle incompletely labeled data}
+
+Our data-quality challenge is quite paradoxical: \textbf{to increase data-quality, we have to rely on the data whose quality we want to improve.}
+
+One issue is then than even if we manage to build a perfect classifier out of this invalid data, when we evaluate it, our precision will be low. Indeed imagine we have 200 products, 100 of them have in reality an 'Organic' label. 40 of them are actually labeled as such in our database (the other 60 being incompletely labeled). If our perfect classifier finds them all, the 100, our classifier precision will be around 40\% instead of 100\% because the test-set on which we will base our estimations will be biaised as well.
+
+To overcome this challenge we adopted the following strategy:
+
+\begin{itemize}
+	\item make predictions based on available partially labeled data
+	\item enrich our predictions with precision estimation based on each class precision given prediction score (see calibration part)
+	\item bulk validate predictions which are not equal to products current attributes (for instance selecting predictions with estimated precision > 0.9)
+	\item validated attributes predictions are stored in a database and override product attributes in classification workflow
+\end{itemize}
+
+In the following graphs, you can see that after a initial prediction of flavors attributes, we could detect with high degree a confidence some flavors attributes that were not labeled. After manually validating them, they were incorporated in the learning data-set and increased the training-support for each class. This improved data-quality led to a raise in flavors scores.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{./images/incompletely-labeled/validation-flavors.png}
+\caption{Validated flavors predictions. On 2017-12-09, we took some time to manually validate about 250 predictions with highest scores (only one was wrong).}
+\end{figure}
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{./images/incompletely-labeled/train-support-flavors.png}
+\caption{Train support for flavors classes increased as a consequence.}
+\end{figure}
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{./images/incompletely-labeled/scores-flavors.png}
+\caption{Flavors scores are very volatile at the begining because of an insufficient number of training samples. After the validation on 2017-12-08, scores increased and score volatility decreased.}
+\end{figure}
+
+
+This process helps us increase the label density on some classes, with led to increased score.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{./images/incompletely-labeled/virtuous-circle.png}
+\caption{Virtuous validation workflow.}
+\end{figure}
+
+
 Consider recall rather than precision. The presence of a lot a FN will impact precision, not recall.
 
 \subsection{Iterative approach to bootstrap new classes}
@@ -651,8 +876,9 @@ After some iterations, there might be enough occurences to ensure sufficient sco
 \subsection{Multilabel}
 \subsection{Tuning strategies}
 
-\section{Misc}
+\section{To investigate further}
 
 \subsection{Dive into kind tree-structure}
 \subsection{Enforce better calibration}
 \subsection{Tuning strategies}
+\subsection{Higher order multilabel strategies}
