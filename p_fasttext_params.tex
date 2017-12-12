@@ -1,0 +1,32 @@
+\chapter{Fasttext implementation} 
+\subsubsection{Fasttext parameters}
+
+List of all parameters:
+\begin{multicols}{3}
+\begin{itemize}
+	\item \textit{epoch}
+	\item \textit{lr}
+	\item \textit{lrUpdateRate}
+	\item \textit{dim}
+	\item \textit{ws}
+	\item \textit{loss}
+	\item \textit{neg}
+	\item \textit{minCountLabel}
+	\item \textit{minCount}
+	\item \textit{minn}
+	\item \textit{maxn}
+	\item \textit{bucket}
+	\item \textit{t}
+\end{itemize}
+\end{multicols}
+
+Fasttext implementation lets you choose two parameters to control $\mu$ over time:
+\begin{itemize}
+	\item \textit{lr}: sets $\mu$ at initialization
+	\item \textit{lrUpdateRate}: how continuous \textit{vs} per steps \textit{lr} decays
+\end{itemize}
+
+The learning rate $\mu$ decrease linearly, from initial given parameter $lr$ to zero.
+
+
+

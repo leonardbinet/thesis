@@ -2,17 +2,17 @@
 \label{cha:results}
 
 
-\section{Natural Language Processing Classification}
+\section{Text categorization}
 
-When dealing with natural language, one of most important common denominator is how we represent words as input to any of our models. How do we transform sentences/words into numerical vectors.
+When dealing with natural language, one of the most important common denominator is how we represent words as input to any of our models. How do we transform sentences/words into numerical vectors.
 
 In this section, we will quickly describe Mikolov's Word2Vec models (Continuous Bag of Word, and Skip-Gram), that proposed a new way to build word embeddings based on words coocurrence in a context window.
 
-Then we will explain in more detail recent work from Facebook, that propose new models based on Mikolov's work, allowing the use of sub-word information, and proposing a novel way to compute classification tasks while learning embeddings.
+Then we will explain in more detail recent work from Facebook, that proposes new models based on Mikolov's work, allowing the use of sub-word information, and proposing a novel way to compute classification tasks while learning embeddings.
 
 \subsection{Probability of sequence of tokens}
 
-One solution to extract information from corpus of text is to build a model that will assign a probability to a sequence of tokens. 
+One solution to extract information from a corpus of text is to build a model that will assign a probability to a sequence of tokens. 
 
 Let's consider the following sentence: \say{\textit{To classify you have to learn.}}
 
@@ -95,7 +95,7 @@ Taking our corpus \say{\textit{To classify you have to learn.}}:
 
 \subsection{Word2Vec models}
 
-Word2vec can utilize either of two model architectures to produce a representation of words: \textbf{continuous bag-of-words} (CBOW) or \textbf{skip-gram}. 
+Word2vec consists in either of two model architectures to produce a representation of words: \textbf{continuous bag-of-words} (CBOW) or \textbf{skip-gram}. 
 
 In the continuous bag-of-words architecture, the model predicts the current word from a window of surrounding context words. The order of context words does not influence prediction (bag-of-words assumption). In the continuous skip-gram architecture, the model uses the current word to predict the surrounding window of context words. 
 The skip-gram architecture weighs nearby context words more heavily than more distant context words.
@@ -140,9 +140,8 @@ The probability of observing a context word $w_t$ given $\mathcal{C}_t^{(c)}$ wi
 
 We create two matrices $A \in \mathbb{R}^{dim \times |V|}$ and $B \in \mathbb{R}^{|V| \times dim}$, where $dim$ is an arbitrary size which defines the size of our embedding space.
 
-$A$ is the input word matrix such that the *i-th column of $A$ is the dim-dimensional embedded vector for word $w_{i}$ when it is an input to this model. 
-Similarly, B is the output word matrix. The *j-th row of B is an dim-dimensional embedded vector for word $w_j$ when it is an output of the model. 
-
+$A$ is the input word matrix such that the *i-th column of $A$ is the embedded vector of dimension \textit{dim} for word $w_{i}$ when it is an input to this model. 
+Similarly, B is the output word matrix. The *j-th row of B is an embedded vector of dimension \textit{dim} for word $w_j$ when it is an output of the model. 
 
 
 Let's introduce some new notations:
@@ -167,7 +166,7 @@ Let's denote our hidden representation:
  \mathbf{h}_t = A.\mathbf{x}_{(\mathcal{C}_t^{(c)})}
 \end{align}
 
-Finally, this hidden representation will be decoded with the output matrix B to be able to compare it with our target word. Since we are in a single labeled multiclass case, the use of softmax function is adapted to sum our probabilities to 1. In short, in CBOW we define the probability of occurence of words each word of the vocabulary, given a context $\mathcal{C}_t^{(c)}$ (our model), as:
+Finally, this hidden representation will be decoded with the output matrix B to be able to compare it with our target word. Since we are in a single labeled multiclass case, the use of softmax function is adapted to sum our probabilities to 1. In short, in CBOW we define the probability of occurence of each word of the vocabulary, given a context $\mathcal{C}_t^{(c)}$ (our model), as:
 
 \begin{align}
  \mathbf{\hat y}_t = 
@@ -185,7 +184,7 @@ Ie $\forall i \in [1, |V|]$:
 \begin{align}
  P(w_{i} | \mathcal{C}_t^{(c)})= 
  	&\frac{  [e^{B.A.\mathbf{x}_{(\mathcal{C}_t^{(c)})}}]_i}
- 	{\sum_{j=1}^{|V|} [e^{B.A.x_{(\mathcal{C}_j^{(c)})}}]_i} \\
+ 	{\sum_{j=1}^{|V|} [e^{B.A.\mathbf{x}_{(\mathcal{C}_t^{(c)})}}]_j} \\
  	\text{      with}& []_i \text{ meaning the i-th element of a vector}
 \end{align}
 
@@ -319,7 +318,7 @@ Ie $\forall i \in [1, K]$:
 \begin{align}
  P(y_i | \mathbf{x})= 
  	&\frac{  [e^{B.A.\mathbf{x}}]_i}
- 	{\sum_{j=1}^{K} [e^{B.A.x}]_i} \\
+ 	{\sum_{j=1}^{K} [e^{B.A.\mathbf{x}}]_j} \\
  	\text{      with}& []_i \text{ meaning the i-th element of a vector}
 \end{align}
 
@@ -425,41 +424,9 @@ Concretely, the use of subword information will only impact:
 	\item how features are encoded in this vocabulary: 'Do you want this apple' will not be encoded as the average of 5 one hot vectors \{do, you, want, this, apple\}, but as the average of one hot vectors of all tokens contained in the sentence \{<do>, <you, you>, <wa, wan, ant, nt> ...\}.
 \end{itemize}
 
-\subsubsection{Miscelanous}
+\subsubsection{Miscellanous}
 
 Optimization, hierarchical softmax, negative sampling, word-n-grams, text preprocessing etc..
-
-
-\subsubsection{Fasttext parameters implementation}
-
-List of all parameters:
-\begin{multicols}{3}
-\begin{itemize}
-	\item \textit{epoch}
-	\item \textit{lr}
-	\item \textit{lrUpdateRate}
-	\item \textit{dim}
-	\item \textit{ws}
-	\item \textit{loss}
-	\item \textit{neg}
-	\item \textit{minCountLabel}
-	\item \textit{minCount}
-	\item \textit{minn}
-	\item \textit{maxn}
-	\item \textit{bucket}
-	\item \textit{t}
-\end{itemize}
-\end{multicols}
-
-Fasttext implementation lets you choose two parameters to control $\mu$ over time:
-\begin{itemize}
-	\item \textit{lr}: sets $\mu$ at initialization
-	\item \textit{lrUpdateRate}: how continuous \textit{vs} per steps \textit{lr} decays
-\end{itemize}
-
-The learning rate $\mu$ decrease linearly, from initial given parameter $lr$ to zero.
-
-
 
 
 \pagebreak
@@ -489,7 +456,7 @@ Multiclass classification metrics in appendix, here only multilabel versions we 
 
 \subsection{Output size challenge}
 
-The key challenge of learning from multi-label data lies in the overwhelming size of output space, i.e. the number of label sets grows exponentially as the number of class labels increases. For example, for a label space with 20 class labels, the number of possible label sets would exceed one million.
+The key challenge of learning from multi-label data lies in the overwhelming size of output space, i.e. the number of label sets grows exponentially as the number of class labels increases. For example, for a label space with 20 class labels, the number of possible label sets would exceed one million ($2^{20}$).
 
 Existing strategies to label correlations exploitation can be categorized based on the order of correlations that the learning techniques have considered:
 \begin{itemize}
@@ -534,7 +501,7 @@ Representative algorithms include:
 
 \subsection{Considered approaches}
 
-In our case could, the possible approaches were:
+In our case, the possible approaches were:
 \begin{itemize}
 	\item 'Word Embedding / Multi-label Classification':
 	\begin{itemize}
@@ -557,10 +524,21 @@ Our first experiments with Fasttext encouraged us to try to use it. Reasons for 
 	\item subword ability
 	\item encouraging scores
 	\item training speed
+	\item small RAM consumption
+	\item quality of implementation
+	\item well maintained code
 \end{itemize}
+
+TODO: from Spark to python
 
 Since we knew that the multi-labeled attributes we wanted to predict are insufficiently labeled, we wanted a fast to train model that could be computed regularly (daily). Because of the iterative improvement and daily evolution of our products data. 
 
+\begin{itemize}
+	\item wanted to have same language in the whole pipeline (previously spark)
+	\item run fitting on single machine
+	\item prepare real-time prediction
+
+\end{itemize}
 
 \subsection{How we adapted Fasttext to multilabel}
 
@@ -600,7 +578,7 @@ Denoting $\sigma$ the sigmoïd function:
 
 For all $i \in [1, K]$: 
 \begin{align}
-	P(y_i | \mathbf{x}) &= \frac{1}{1 + e^{[B.A.x]_i}}\\
+	P(y_i | \mathbf{x}) &= \frac{1}{1 + e^{[B.A.\mathbf{x}]_i}}\\
 		\text{      with } &[z]_i \text{ meaning the i-th element of a vector}
 \end{align}
 
@@ -624,7 +602,7 @@ Whereas the true target is noted (binary vector):
 	\end{bmatrix}  
 \end{align}
 
-Minimizing the following loss on one sample $(\mathbf{x}, \mathbf{y})$ is equivalent to maximizing log-likelihood, (based on the assumption that $\mathbf{y}$ components are independent, which is usually unfortunately false):
+Based on the assumption that $\mathbf{y}$ components are independent, (which is unfortunatly usually false but lets us treat each class independently as a binary problem), minimizing the following loss on one sample $(\mathbf{x}, \mathbf{y})$ is equivalent to maximizing log-likelihood:
 
 \begin{align}
 	E = - \sum_{k=1}^K
@@ -637,54 +615,6 @@ Minimizing the following loss on one sample $(\mathbf{x}, \mathbf{y})$ is equiva
 \end{align}
 
 Demonstration is present in appendix A.
-
-\textbf{Neural network representation:}
-
-\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep]
-    \tikzstyle{every pin edge}=[<-,shorten <=1pt]
-    \tikzstyle{neuron}=[circle,fill=black!25,minimum size=17pt,inner sep=0pt]
-    \tikzstyle{input neuron}=[neuron, fill=yellow!50];
-    \tikzstyle{output neuron}=[neuron, fill=blue!50];
-    \tikzstyle{hidden neuron}=[neuron, fill=red!50];
-    \tikzstyle{true neuron}=[neuron, fill=green!50];
-    \tikzstyle{annot} = [text width=4em, text centered]
-
-    % Draw the input layer nodes
-    \foreach \name / \y / \word in {1/1/I,2/2/am,3/3/hungry,4/4/get,5/5/out, 6/6/nice, 7/7/apple}
-        \node[input neuron, pin=left:(\textit{\word  }) $x_{\y}$ ] (I-\name) at (0,-\y) {};
-
-    % Draw the hidden layer nodes
-    \foreach \name / \y in {1,...,3}
-        \node[hidden neuron] (H-\name) at (\layersep,-1 -\y) {};
-
-    % Draw the output layer node
-	\foreach \name / \y in {1,...,4}
-        \node[output neuron, pin=right:$\hat y_{\y}$ ] (O-\name) at (\layersep*2,-0.5 -\y) {};
-
-    % Draw the true layer node
-	\foreach \name / \y / \label in {1/1/happy,2/2/neutral, 3/3/curious,4/4/angry}
-        \node[true neuron, pin=right:$y_{\y}$ (\textit{  \label})] (T-\name) at (\layersep*3,-0.5 -\y) {};
-
-    % Connect every node in the input layer with every node in the hidden layer.
-    \foreach \source in {1,...,7}
-        \foreach \dest in {1,...,3}
-            \path (I-\source) edge (H-\dest);
-
-    % Connect every node in the hidden layer with the output layer
-    \foreach \source in {1,...,3}
-        \foreach \dest in {1,...,4}
-	        \path (H-\source) edge (O-\dest);
-
-    % Annotate the layers
-    \node[annot,above of=H-1, node distance=2.5cm] (hl) {Hidden layer: $\mathbf{h}$ of size \textit{dim}};
-    \node[annot,left of=hl] {Input layer: $\mathbf{x}$ (size $|V|$)};
-    \node[annot,right of=hl] (ol) {Output layer: $\mathbf{\hat y}$ of size $K$};
-    \node[annot,right of=ol] {Target: binary vector $\mathbf{y}$ of size $K$};
-
-    \node[annot] (A) at (\layersep/2,-6) {$A$};
-    \node[annot] (B) at (\layersep*3/2,-5) {$B$};
-
-\end{tikzpicture}
 
 
 \subsubsection{Gradient retropropagation}
@@ -787,14 +717,12 @@ Trick: derivate $E$ in regard to $s_k$:
 
 \subsubsection*{Gradient descent}
 
-At each sample $(\mathbf{x}, \mathbf{y})$, given a learning rate $\mu$, we update weight as follow:
+At each sample $(\mathbf{x}, \mathbf{y})$, given a learning rate $\mu$, we update weights as follow:
 
-$B$ weights:
 \begin{align}
 	B_i^{(k)\mbox{new}} \leftarrow B_i^{(k)\mbox{old}} - \mu (h_i (\hat y_k - y_k))
 \end{align}
 
-$A$ weights:
 \begin{align}
 	A_i^{(j)\mbox{new}} \leftarrow A_i^{(j)\mbox{old}} - 
 	\mu 
@@ -803,19 +731,57 @@ $A$ weights:
 	\right)
 \end{align}
 
+\subsection{Results}
 
+Considering how simple is Fasttext linear classifier, results can be considered as good:
+\begin{itemize}
+	\item detail about achievements
+\end{itemize}
 
 \pagebreak
 \section{Calibration}
 
-After producing our first predictions, we soon realized that we needed more controll on probability scores computed by our models. For some classes, a 0.8 score would on average be right 0.5 of the time, on other classes it could be the opposite, a 0.5 score could be right 0.8 of the time on average.
+When performing classification one often wants not only to predict the class label, but also to obtain a probability of the respective label. This probability gives some kind of confidence on the prediction.
+Well calibrated classifiers are probabilistic classifiers for which the score output can be directly interpreted as a confidence level. For instance, a well calibrated (binary) classifier should classify the samples such that among the samples to which it gave a score close to 0.8, approximately 80\% actually belong to the positive class.
 
-In this section we will first a naïve calibration implementation, and introduce more commonly adopted strategies.
+In our prediction process, having high training scores is important. But since we want to validate predictions before sending suggestions to our customers, it is even more important to have calibrated probabilities in order to estimate a prediction likelihood to be valid and easily and quickly validate of refuse it.
 
-\subsection{Predictions precision/recall estimation}
+After producing our first predictions, we soon realized that we needed more control on scores computed by our models, even though the logistic regression naturally provides quite well calibrated scores:
+\begin{itemize}
+	\item for some classes, a 0.8 score would on average be right 0.5 of the time
+	\item on other classes it could be the opposite, a 0.5 score could be right 0.8 of the time on average
+\end{itemize}
+
+
+In this section we will first present a naïve calibration we implemented, and then introduce more commonly adopted strategies.
+
+\subsection{Naïve calibration}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{./images/calibration/precision_recall_curve.png}
+\caption{Global precision/recall curve for attribute 'product labels' (organic, made in France etc).}
+\end{figure}
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.40]{./images/calibration/islabeledby_calibration_curve.png}
+\caption{Calibration curve: true precision compared to predicted probabilities/scores.}
+\end{figure}
+
+TODO: use sklearn calibration curves.
+
+\subsection{More advanced calibration techniques}
+
+Two common approaches for performing calibration of probabilistic predictions are: 
+\begin{itemize}
+	\item a parametric approach based on Platt’s sigmoid model 
+	\item a non-parametric approach based on isotonic regression.
+\end{itemize}
+\cite{Calibration}
 
 \section{Missing labels}
-
 
 \subsection{Strategies to handle incompletely labeled data}
 
@@ -855,7 +821,7 @@ In the following graphs, you can see that after a initial prediction of flavors 
 \end{figure}
 
 
-This process helps us increase the label density on some classes, with led to increased score.
+This process helps us increase the label density on some classes, which led to increased score.
 
 \begin{figure}[H]
 \centering
@@ -864,21 +830,50 @@ This process helps us increase the label density on some classes, with led to in
 \end{figure}
 
 
-Consider recall rather than precision. The presence of a lot a FN will impact precision, not recall.
+Consider recall rather than precision. The presence of a lot a false negatives will impact precision, not recall.
 
 \subsection{Iterative approach to bootstrap new classes}
 Manually label some products with new classes, then focus validation on these products. The validated suggestions will be used in next classification workflow.
 
 After some iterations, there might be enough occurences to ensure sufficient scores.
 
-\section{Results}
-\subsection{Multiclass}
-\subsection{Multilabel}
-\subsection{Tuning strategies}
-
 \section{To investigate further}
 
+This section cover some topics we have not had time to cover for now, and that we think could help us deliver better results.
+
 \subsection{Dive into kind tree-structure}
+One of the attributes we predict has a tree structure: the 'kind', or product category. 
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{./images/to-investigate/tree-structure.png}
+\caption{Kind tree structure: Food contains Beverage, that contains Soft-dring, that contains Water, Soda etc..}
+\end{figure}
+
+We could take advantage of the information contained in the tree structure to improve classification. 
+
+One possible strategy could be to create a kind similarity function, returning a scalar based on proximity in tree structure:
+\begin{itemize}
+	\item 'water' is very close to 'soft drink' because it is its direct child
+	\item 'water' and 'bread' are very different because the shortest path between them is 4 edges.
+\end{itemize}
+
+This similarity function could be used as a coefficient in the cost function: 
+\begin{itemize}
+	\item if we predict 'soft drink' instead of 'water', the cost would be lowered because the error is minor
+	\item if we predict 'bread' instead of 'water', the cost would be raised because the prediction is completely wrong
+\end{itemize}
+
+
+\subsection{Improve decision function}
+\subsubsection{F-beta score in case of not fully labeled data-set}
+\subsubsection{Threshold strategies based on multilabel scores output}
+
 \subsection{Enforce better calibration}
 \subsection{Tuning strategies}
+
+For now: 
+
+Quite random. Intuition. All dimensions except one or two. Difficult to understand.
+
 \subsection{Higher order multilabel strategies}
