@@ -224,8 +224,7 @@ Predict stage includes:
 Suggestions from machine learning, are merged with suggestions issued from web-scrapping.
 Those suggestions are indexed together to provide a global score (number of concordant sources) to suggestions.
 
-
-Annexe:
+Here is an example of a suggestion document that will be indexed in ElasticSearch. Its structure will allow us to perform complex queries and provide a validation dashboard with many functionalities.
 \begin{minted}[breaklines, fontsize=\small]{json}
 {
     "_type": "fieldsuggestion",
@@ -296,7 +295,7 @@ In case of acceptation, the product's data is changed in Alkemics product databa
 \pagebreak
 \section{Regular maintenance and improvement tasks}
 
-Now that the workflow is deployed, work isn't over.
+Once the workflow is deployed there are several day-to-day tasks to perform. This include monitoring the workflow to detect eventual anomalies, validating suggestions so that they are sent to users, and manually bootstrapping some classes for which our models don't perform well.
 
 \subsection{Monitoring}
 
@@ -403,7 +402,7 @@ For instance, some new ingredients might appear, and at the beginning their low 
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.5]{./images/data-quality/islabeledby_support_score.png}
-\caption{Tuna fish performs badly, because of the low train support.}
+\caption{Selection of classes with lowest scores. Tuna fish performs badly, because of the low train support.}
 \end{figure}
 
 In that case we will use our validation dashboard. We would make a textual search to validate some related suggestions, or even create manually some suggestions. Sometimes, even some dozens of occurences will bootstrap a new class and launch a virtuous circle for the model.

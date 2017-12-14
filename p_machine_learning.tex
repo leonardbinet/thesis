@@ -42,7 +42,7 @@ Let's introduce the notations for this section:
         $V(w_i)$       &    the index of i-th word of corpus in vocabulary V, such as $ w_{i} = v_{V(w_i)}$\\
         $C_t^{(c)}$      &    the context of t-th word in corpus, for window of size $c$: $w_{t-c}, ..., w_{t-1}, w_{t+1}, ... ,w_{t+c}$\\
 		$\mathbf{x}_i$ 				& one hot word vector corresponding i-th word in vocabulary $V$ \\
-        $\mathbf{\bar x}$ 	& the average of all one hot vectors of words in context $C_t^{(c)}$ \\
+        $\mathbf{\bar x_t}$ 	& the average of all one hot vectors of words in context $C_t^{(c)}$ \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -57,7 +57,7 @@ With:
 		\vdots\\
 		0
 	\end{bmatrix} \\
-	\mathbf{\bar x} &= \frac{\mathbf{x}_{V(t-c)} + \mathbf{x}_{V(t-c+1)} ... + \mathbf{x}_{V(t+c)}}{|C_t^{(c)}|}
+	\mathbf{\bar x_t} &= \frac{\mathbf{x}_{V(t-c)} + \mathbf{x}_{V(t-c+1)} ... + \mathbf{x}_{V(t+c)}}{|C_t^{(c)}|}
 \end{align}
 
 Taking our corpus \say{\textit{To classify you have to learn.}}:
@@ -75,7 +75,7 @@ Taking our corpus \say{\textit{To classify you have to learn.}}:
 	\item $C_3^{(2)}$ is context of word \textbf{you} with window of size 2: \{to, classify, have, to\}
 	\item 
 		\begin{align}
-		\mathbf{\bar x} &= (\mathbf{x}_{V(w_1)} +\mathbf{x}_{V(w_2)} + \mathbf{x}_{V(w_4)} + \mathbf{x}_{V(w_5)}) / 4 \\ 
+		\mathbf{\bar x_t} &= (\mathbf{x}_{V(w_1)} +\mathbf{x}_{V(w_2)} + \mathbf{x}_{V(w_4)} + \mathbf{x}_{V(w_5)}) / 4 \\ 
 		&= (\mathbf{x}_{1} +\mathbf{x}_{2} + \mathbf{x}_{4} + \mathbf{x}_{1}) / 4 
 		=\begin{bmatrix} 
 			1/2 \\
@@ -154,11 +154,11 @@ Let's introduce some new notations:
 \end{table}
 }
 
-The input matrix A converts our encoded input bag of words ($\mathbf{\bar x} $) into a representation in a lower dimensionality.
+The input matrix A converts our encoded input bag of words ($\mathbf{\bar x_t} $) into a representation in a lower dimensionality.
 
 Let's denote our hidden representation:
 \begin{align}
- \mathbf{h}_t = A.\mathbf{\bar x}
+ \mathbf{h}_t = A.\mathbf{\bar x_t}
 \end{align}
 
 Finally, this hidden representation will be decoded with the output matrix B to be able to compare it with our target word. Since we are in a single labeled multiclass case, the use of softmax function is adapted to sum our probabilities to 1. In short, in CBOW we define the probability of occurence of each word of the vocabulary, given a context $\mathcal{C}_t^{(c)}$ (our model), as:
@@ -172,14 +172,14 @@ Finally, this hidden representation will be decoded with the output matrix B to 
 		\vdots \\
 		P(v_{|V|} | \mathcal{C}_t^{(c)})
 	\end{bmatrix} = 
-	softmax(B.A.\mathbf{\bar x} )
+	softmax(B.A.\mathbf{\bar x_t} )
 \end{align}
 
 Ie $\forall i \in [1, |V|]$:
 \begin{align}
  P(v_i | \mathcal{C}_t^{(c)})= 
- 	&\frac{  [e^{B.A.\mathbf{\bar x}}]_i}
- 	{\sum_{j=1}^{|V|} [e^{B.A.\mathbf{\bar x}} ]_j} \\
+ 	&\frac{  [e^{B.A.\mathbf{\bar x_t}}]_i}
+ 	{\sum_{j=1}^{|V|} [e^{B.A.\mathbf{\bar x_t}} ]_j} \\
  	\text{      with}& []_i \text{ meaning the i-th element of a vector}
 \end{align}
 
@@ -525,10 +525,10 @@ Some adaptative algorithm exist for lazy learning techniques (kNN), decision tre
 This category of algorithms tackle multi-label learning problem by transforming it into other well-established learning scenarios (binary or multiclass classification scenarios). 
 Representative algorithms include:
 \begin{itemize}
- \item first-order approaches Binary Relevance which transform the task of multi-label learning into the task of binary classification 
- \item high-order approach Classifier Chains which transform the task of multi-label learning into the task of binary classification 
- \item secondorder approach Calibrated Label Ranking which transforms the task of multi-label learning into the task of label ranking
- \item high-order approach Random k-labelsets which transforms the task of multi-label learning into the task of multi-class classification
+ \item Binary Relevance: which transform the task of multi-label learning into the task of binary classification (first-order)
+ \item Classifier Chains: which transform the task of multi-label learning into the task of binary classification (high-order)
+ \item Calibrated Label Ranking: which transforms the task of multi-label learning into the task of label ranking (second-order)
+ \item Random k-labelsets which transforms the task of multi-label learning into the task of multi-class classification (high-order)
 \end{itemize}
 
 \begin{figure}[H]
@@ -771,15 +771,6 @@ At each sample $(\mathbf{x}, \mathbf{y})$, given a learning rate $\mu$, we updat
 	\right)
 \end{align}
 
-\subsection{Results}
-
-Considering how simple is Fasttext linear classifier, results can be considered as good:
-\begin{itemize}
-	\item detail about achievements
-\end{itemize}
-
-
-
 
 
 \pagebreak
@@ -918,6 +909,8 @@ After some iterations, there might be enough occurences to ensure sufficient sco
 
 \section{Evaluate results}
 
+Are we satisfied of our performances, could we do better or not given the task difficulty? Even though we will detail in next section the fields we want to investigate further to improve our models, these are difficult questions for which our answers cannot be definitive.
+
 \subsection{Assess task difficulty}
 Task difficulty can be assessed differently for each predicted field. It is dependent on multiple factors:
 \begin{itemize}
@@ -932,22 +925,56 @@ Task difficulty can be assessed differently for each predicted field. It is depe
 		\item classes and label densities: it will be difficult to predict labels that nearly never occur
 	\end{itemize}
 	\item is the information present in some form in features
+	\begin{itemize}
+		\item flavors are usually nearly textually present in features (textual composition, or description)
+		\item in contrast to kind (category) which are not necessarly textually present
+	\end{itemize}
 \end{itemize}
 
-\begin{tabularx}{\textwidth}{|l|r|X|X|X|X|X|X|r|}
+\begin{tabularx}{\textwidth}{|l|r|X|X|X|X|X|r|}
 \toprule
-field & type &  label\ count & label\ cardinality &  label\ density &  label\ diversity &  nb\ classes &  nb\ samples & presence \\
+field & type &  label\ count & label\ cardinality &  label\ density &  label\ diversity &  nb\ classes &  nb\ samples \\
 \midrule
-hazard			      &          multilabel &    2243     &     0.0408 &         0.0082 &             1090 &           5 &       54990 & very low\\
-flavors               &          multilabel &    355      &     0.0065 &         0.0006 &              253 &          11 &       54990 & high \\
-kind                  &          multiclass &    43335    &     1.0000 &         0.0057 &              175 &         175 &       43335 & low \\
-ingredients			  &          multilabel &    54259    &     0.9867 &         0.0111 &            16810 &          89 &       54990 & high \\
-labels 		          &          multilabel &    22803    &     0.4147 &         0.0078 &             7078 &          53 &       54990 & medium \\
+hazard			      &          multilabel &    2243     &     0.0408 &         0.0082 &             1090 &           5 &       54990\\
+flavors               &          multilabel &    355      &     0.0065 &         0.0006 &              253 &          11 &       54990 \\
+kind                  &          multiclass &    43335    &     1.0000 &         0.0057 &              175 &         175 &       43335 \\
+ingredients			  &          multilabel &    54259    &     0.9867 &         0.0111 &            16810 &          89 &       54990 \\
+labels 		          &          multilabel &    22803    &     0.4147 &         0.0078 &             7078 &          53 &       54990 \\
 \bottomrule
 \end{tabularx}
 
 
 \subsection{Assess how well our model perform}
+
+\textbf{Micro average scores}
+\begin{tabular}{lrrr}
+\toprule
+{} &  f1\_score &  precision &   recall \\
+fieldmetadata\_name    &           &            &          \\
+\midrule
+hazardpictograms      &   0.808 &    0.833 &  0.784 \\
+hasnotableingredients &   0.745 &    0.755 &  0.735 \\
+kind                  &   0.882 &    0.882 &  0.882 \\
+flavors               &   0.403 &    0.552 &  0.318 \\
+islabeledby           &   0.794 &    0.803 &  0.785 \\
+\bottomrule
+\end{tabular}
+
+\textbf{Macro average scores}
+\begin{tabular}{lrrr}
+\toprule
+{} &  f1\_score &  precision &   recall \\
+fieldmetadata\_name    &           &            &          \\
+\midrule
+hazardpictograms      &   0.788 &    0.834 &  0.751 \\
+hasnotableingredients &   0.544 &    0.523 &  0.605 \\
+kind                  &   0.787 &    0.785 &  0.805 \\
+flavors               &   0.348 &    0.479 &  0.294 \\
+islabeledby           &   0.626 &    0.613 &  0.690 \\
+\bottomrule
+\end{tabular}
+
+As a reminder, in our case we will generally more consider 
 
 
 
@@ -1005,5 +1032,7 @@ Possible strategies include:
 Yet, these strategies are possible only with datasets with sufficient samples, otherwise we will overfit.
 
 \subsection{Cross validation for sets with low label density}
+
+Our 
 
 \subsection{More workflow tests}
