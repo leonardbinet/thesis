@@ -52,17 +52,16 @@ Data quality can be evaluated through:
 \item Marketing: display detailed information about products to customers. Would you buy products with no description?
 \item Search: to correctly index products you need data, for instance how will your customer find strawberry icecream is flavors fields are not well filled. Well indexed products is key to performant search engine on web plateforms.
 \item Logistics: weight, size, number of units etc. These fields allow retailers to correctly handle logistics.
+\item Competition: the rise of Amazon is a direct threat to all retailers. One of Amazon's advantages is its huge ability to handle data-flows.
 \end{itemize}
 
-The growing part of online groceries.
-The rise of Amazon is a direct threat to all retailers. One of Amazon's advantages is its huge ability to handle data-flows.
 
 \subsection{Why is the data of poor quality}
 
 Some of the reasons are:
 
 \begin{itemize}
-\item many actors have to communicate: +50k manufacturers, dozens of retailers. Each manufacturer has to send its data to each retailer sending its products => hundreds of thousands of connections
+\item many actors have to communicate: more than 50 thousands of manufacturers have to interact with dozens of retailers. Each manufacturer has to send its data to each retailer sending its products. This represents hundreds of thousands of connections.
 \item no fully accepted data-model standard. Even though GDSN standard is dominant, not all companies are compliant with it.
 \item actors interested in data-quality (primarly retailers), rely on actors for which it is less crucial (makers)
 \item products data identification numbers (EAN) frequently change
@@ -75,9 +74,16 @@ The predicted fields for now are:
 \begin{itemize}
 	\item hazard pictograms (inflammable, corrosive etc ...)
 	\item labels (organic, made in France, eco-packaging etc...)
-	\item category in Alkemics data-model (Processed meat, Cereal, baked product etc...)
+	\item kind: category in Alkemics data-model (Processed meat, Cereal, baked product etc...)
 	\item allergens (walnut, lactose, sulfite etc ...)
+	\item flavors
 \end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.55]{./images/workflow/predicted_fields.png}
+\caption{Number of distinct classes per predicted attribute.}
+\end{figure}
 
 After these predictions are made, we want to evaluate it against products attributes to warn the manufacturers if we think that some of its data is incomplete or innacurate.
 
@@ -97,6 +103,13 @@ After these predictions are made, we want to evaluate it against products attrib
 
 
 This part aims at presenting the workflow we use to provide attribute suggestions on product-pages to our users.
+
+During the creation of this workflow, we sticked to some best practices for machine learning engineering, among those listed in a Google paper \cite{RulesMLGoogle} we can cite:
+\begin{itemize}
+	\item keep the model simple and get the infrastructure right (rule 4)
+	\item test the infrastructure independently from the machine learning (rule 5)
+	\item starting with an interpretable model makes debugging easier (rule 14)
+\end{itemize}
 
 \begin{figure}[H]
 \centering
@@ -126,12 +139,8 @@ This part aims at presenting the workflow we use to provide attribute suggestion
 
 \subsection{Feature and labels extraction}
 
-From product database.
-From validation database: suggestion validated by Alkemics, not yet accepted/refused by client. -> ability to bootstrap and improve models. 
-
-
 In our data-model, a product can consist of more than one hundred of fields, yet only some of them can be sufficient.
-The idea is to find a compromise between gathering enough information from products (-> more fields), but on fields with sufficient completion (-> less fields).
+The idea is to find a compromise between gathering enough information from products (-> more fields), but on fields with sufficient completion (-> less fields). For now we chose to only use textual data, and let aside pictures (we might use them in the future).
 
 Let's take a cereal bar of brand Grany:
 \begin{figure}[H]
@@ -142,17 +151,17 @@ Let's take a cereal bar of brand Grany:
 
 Here are the extracted attributes that will be processed to provide our features.
 
-\begin{lstlisting}[language=json]
+\begin{minted}[breaklines, fontsize=\small]{json}
 {
     "brand": "Grany",
     "namePublicLong": "Grany Coeur Fondant Gout Chocolat Noisettes 120g",
     "nameLegal": "BARRE CEREALIERE FOURREE AU CHOCOLAT ET A LA NOISETTE.",
-    "composition": "Ingrédients: Céréales 31,5% (farine de RIZ 9,1%, farine de BLÉ 5,6%, grains de maïs 4,7%, flocons de BLÉ 4,5%, flocons d'AVOINE 4,5%, flocons d'ORGE 2,5%, farine de BLÉ malté 0,6%), sirop de glucose-fructose, sucre, huile de coprah, LAIT écrémé en poudre, huile de palme, chocolat 5% (sucre, pâte de cacao), pâte de NOISETTES 5%, cacao maigre en poudre, humectant (glycérol), sel, gluten (de BLÉ), dextrose, émulsifiant (lécithine de tournesol), malt d'ORGE, arôme (NOISETTES), ARACHIDE. PEUT CONTENIR SOJA, AUTRES FRUITS À COQUE.',
+    "composition": "Ingrédients: Céréales 31,5% (farine de RIZ 9,1%, farine de BLÉ 5,6%, grains de maïs 4,7%, flocons de BLÉ 4,5%, flocons d'AVOINE 4,5%, flocons d'ORGE 2,5%, farine de BLÉ malté 0,6%), sirop de glucose-fructose, sucre, huile de coprah, LAIT écrémé en poudre, huile de palme, chocolat 5% (sucre, pâte de cacao), pâte de NOISETTES 5%, cacao maigre en poudre, humectant (glycérol), sel, gluten (de BLÉ), dextrose, émulsifiant (lécithine de tournesol), malt d'ORGE, arôme (NOISETTES), ARACHIDE. PEUT CONTENIR SOJA, AUTRES FRUITS À COQUE.",
     "description": "Grany au cœur Chocolat au Lait et aux Noisettes, le plaisir brut des céréales associées au fondant du chocolat au lait !",
     "advices": "",
     "healthAllegations": ""
 }
-\end{lstlisting}
+\end{minted}
 
 \subsection{Feature engineering}
 
@@ -171,38 +180,35 @@ This is classic NLP preprocessing.
 		\item remove eventual html tags
 		\item filter stopwords and punctuation
 		\item remove digits
-		\item stem
+		\item stem (we use NLTK package \cite{NLTK})
 	\end{itemize}
 	\item concatenate tokens
 \end{enumerate}
 
 Our previous object is now a list of preprocessed tokens that take the following form.
 
-\begin{lstlisting}[language=json]
+\begin{minted}[breaklines, fontsize=\small]{json}
 "grany cur chocolat lait noiset plais brut cereal associe fond chocolat lait grany barr cerealier fourre chocolat noiset grany coeur fond gout chocolat noiset ingredient cereal farin riz farin ble grain flocon ble flocon avoin flocon orge farin ble malt sirop glucos fructos sucr huil coprah lait ecrem poudr huil palm chocolat sucr pat cacao pat noiset cacao maigr poudr humect glycerol sel gluten ble dextros emulsifi lecithin tournesol malt orge arom noiset arachid conten soj autr fruit coqu"
-\end{lstlisting}
+\end{minted}
 
 \subsection{Training stage}
 
 Training stage includes:
-\begin{itemize}
-	\item labeled-set preprocessing
-	\item split train/test:
-	\item train on train, predict on test
-	\item compute scores reports on both train-set and test-set
+\begin{enumerate}
+	\item labeled-set preprocessing: remove blacklisted labels, filter classes without enough occurences (we want our model to learn only labels we want to display).
+	\item split training/testing sets:
+	\item fit models on training set, predict on testing set
+	\item compute performance and monitoring reports separatly on both train-set and test-set
 	\item compute global/local precision curves
 	\item save model for further use
 	\item index reports for monitoring
+\end{enumerate}
+
+Labeled-set preprocessing is not the same in the case we consider multiclass or multilabel classification.
+\begin{itemize}
+	\item in multiclass case: every sample has one and only one label
+	\item in multilabel case: a sample can be considered even though it has no label
 \end{itemize}
-
-
-Multiclass labeled-set preprocessing: every sample has one and only one label
-- filter labeled items
-- remove classes with not enough occurences
-
-Multilabel labeled-set preprocessing: samples can have 0->n labels
-- a sample can be considered even though it has no label
-- remove classes with not enough occurences from label lists
 
 \subsection{Predict stage}
 Predict stage includes: 
@@ -220,7 +226,7 @@ Those suggestions are indexed together to provide a global score (number of conc
 
 
 Annexe:
-\begin{lstlisting}[language=json]
+\begin{minted}[breaklines, fontsize=\small]{json}
 {
     "_type": "fieldsuggestion",
     "extended_attributes": {
@@ -229,7 +235,6 @@ Annexe:
         "probability": 0.87393,
         "recall_group": 0.55128
     },
-    "entity_type": "carrefour_drive",
     "field": {
         "status": 0,
         "fieldmetadata_name": "hasnotableingredients",
@@ -249,8 +254,6 @@ Annexe:
             "name": "Mondelez International"
         },
         "sources": [
-            "carrefour_drive",
-            "intermarche",
             "openfoodfacts",
             "ml"
         ],
@@ -259,7 +262,7 @@ Annexe:
         "name": "Grany Coeur Fondant Gout Chocolat Noisettes 120g"
     }
 }
-\end{lstlisting}
+\end{minted}
 
 
 \subsection{Validation (or refusal) from Alkemics}
@@ -351,20 +354,42 @@ In our case, we can also check the validation/refusal ratio at validation stage:
 
 \subsubsection{Evaluate business impact}
 
-\subsection{Deliver suggestion validation}
+Number of views, and acceptation rates.
+
+\subsection{Deliver validated suggestions}
 
 By a mix of automation and manual validation.
 A big effort has been made to build an internal suggestion validation dashboard. 
 
-Even though it is not 'sexy', it is definitely necessary until we have enough feedback and experience.
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.50]{./images/data-quality/validation-dashboard.png}
+\caption{Validation dashboard.}
+\end{figure}
+
+This dashboard allows us to easily filter suggestions based on:
+\begin{multicols}{2}
+\begin{itemize} 
+	\item validation/acceptation status
+	\item is prediction a the current value
+	\item field (flavors, kind...)
+	\item classes (gluten, lactose...)
+	\item organizations
+	\item source 
+	\item score 
+\end{itemize}
+\end{multicols}
+
+For instance it is thus possible to easily select suggestions whose validation status is pending, and that do not match current values in database. We can then sort these suggestions by number of different sources and filter those with sufficient precision estimation, and validate suggestions in batches.
+
 
 \subsection{Tune fasttext hyperparameters}
 
 Each predicted field data-set has different charateristics:
 \begin{itemize}
-	\item number of different classes: from 5 to 300
+	\item number of different classes (5 to 175)
 	\item classes disparity: some fields have very distinct classes, whereas some others have very related classes.
-	\item label density (for multilabel): do your products have on average 1 label or 5 different labels ?
+	\item label density (for multilabel): do your products have on average 1 label or 5 different labels
 \end{itemize}
 
 Then, each of these tasks might require different model hyper-parameters (those parameters will be detailed in the next chapter).
@@ -373,8 +398,14 @@ That's why we build a service on a dedicated machine whose goal is to find the b
 \subsection{Bootstrap new classes/fields}
 
 Everyday at Alkemics, clients use our plateform, and the data changes, lives. Thus, unlike in kaggle competition, our datasets evolves.
-For some reasons we might want not to take into account some deprecated classes. For instance the kind field.
+For instance, some new ingredients might appear, and at the beginning their low number of occurence might prevent the model to perform well.
 
-Explain ...
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{./images/data-quality/islabeledby_support_score.png}
+\caption{Tuna fish performs badly, because of the low train support.}
+\end{figure}
+
+In that case we will use our validation dashboard. We would make a textual search to validate some related suggestions, or even create manually some suggestions. Sometimes, even some dozens of occurences will bootstrap a new class and launch a virtuous circle for the model.
 
 

@@ -24,3 +24,7 @@
 *.log.txt
 *.synctex
 *.bbl
+
+# minted
+*.pygtex
+*.pygstyle

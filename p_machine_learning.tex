@@ -38,11 +38,11 @@ Let's introduce the notations for this section:
         $V$       	   	 &    the ordered vocabulary \\
         $T$    		   	 &    the size of corpus \\
         $w_i$          	 &    the i-th word in corpus \\
-        $w_{i^{(v)}}$          	 &    the i-th word in vocabulary \\
-        $*i = V(w_{i})$       &    the index of i-th word of corpus in vocabulary V, such as $ w_{i} = w_{*i^{(v)}}$\\
+        $v_{i}$          	 &    the i-th word in vocabulary \\
+        $V(w_i)$       &    the index of i-th word of corpus in vocabulary V, such as $ w_{i} = v_{V(w_i)}$\\
         $C_t^{(c)}$      &    the context of t-th word in corpus, for window of size $c$: $w_{t-c}, ..., w_{t-1}, w_{t+1}, ... ,w_{t+c}$\\
 		$\mathbf{x}_i$ 				& one hot word vector corresponding i-th word in vocabulary $V$ \\
-        $\mathbf{x}_{(C_t^{(c)})}$ 	& the average of all one hot vectors of words in context $C_t^{(c)}$ \\
+        $\mathbf{\bar x}$ 	& the average of all one hot vectors of words in context $C_t^{(c)}$ \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -50,22 +50,14 @@ Let's introduce the notations for this section:
 
 With:
 \begin{align}
-	v_1 &= 
+	\mathbf{x}_1 &= 
 	\begin{bmatrix} 
 		1 \\
 		0 \\
 		\vdots\\
 		0
-	\end{bmatrix}
-	v_{*1} = 
-	\begin{bmatrix} 
-		0 \\
-		1 \\
-		\vdots\\
-		0
-	\end{bmatrix}
-	\textnormal{if } *1 = V(w_1) = 2\\
-	\mathbf{x}_{(C_t^{(c)})} &= \frac{\mathbf{x}_{*(t-c)} + \mathbf{x}_{*(t-c+1)} ... + \mathbf{x}_{*(t+c)}}{|C_t^{(c)}|}
+	\end{bmatrix} \\
+	\mathbf{\bar x} &= \frac{\mathbf{x}_{V(t-c)} + \mathbf{x}_{V(t-c+1)} ... + \mathbf{x}_{V(t+c)}}{|C_t^{(c)}|}
 \end{align}
 
 Taking our corpus \say{\textit{To classify you have to learn.}}:
@@ -73,23 +65,26 @@ Taking our corpus \say{\textit{To classify you have to learn.}}:
 \begin{itemize}
 	\item our corpus is of size: $T=6$
 	\item our vocabulary is: $V =$ (to, classify, you, have, learn), an ordered list of size $|V| = 5$ (word \textbf{to} is present twice in corpus)
-	\item $w_5$ is word \textbf{to}, indexed in vocabulary as $*5 = V(w_5) = 1$ (first word of vocabulary)
-	\item $\mathbf{x}_{*5} = \mathbf{x}_{1} = \begin{bmatrix} 
+	\item $w_5$ is word \textbf{to}, indexed in vocabulary as $V(w_5) = 1$ (first word of vocabulary), ie $w_5 = v_1$
+	\item $\mathbf{x}_{V(w_5)} = \mathbf{x}_{1} = \begin{bmatrix} 
 		1 \\
 		0 \\
 		\vdots\\
 		0
 	\end{bmatrix}$
 	\item $C_3^{(2)}$ is context of word \textbf{you} with window of size 2: \{to, classify, have, to\}
-	\item $x_{(C_3^{(2)})} = 
-	(\mathbf{x}_{*1} +\mathbf{x}_{*2} + \mathbf{x}_{*4} + \mathbf{x}_{*5}) / 4 = (\mathbf{x}_{1} +\mathbf{x}_{2} + \mathbf{x}_{4} + \mathbf{x}_{1}) / 4
-	=\begin{bmatrix} 
-		1/2 \\
-		1/4 \\
-		0\\
-		1/4\\
-		0
-	\end{bmatrix}$
+	\item 
+		\begin{align}
+		\mathbf{\bar x} &= (\mathbf{x}_{V(w_1)} +\mathbf{x}_{V(w_2)} + \mathbf{x}_{V(w_4)} + \mathbf{x}_{V(w_5)}) / 4 \\ 
+		&= (\mathbf{x}_{1} +\mathbf{x}_{2} + \mathbf{x}_{4} + \mathbf{x}_{1}) / 4 
+		=\begin{bmatrix} 
+			1/2 \\
+			1/4 \\
+			0\\
+			1/4\\
+			0
+		\end{bmatrix}
+	\end{align}
 \end{itemize}
 
 
@@ -140,8 +135,8 @@ The probability of observing a context word $w_t$ given $\mathcal{C}_t^{(c)}$ wi
 
 We create two matrices $A \in \mathbb{R}^{dim \times |V|}$ and $B \in \mathbb{R}^{|V| \times dim}$, where $dim$ is an arbitrary size which defines the size of our embedding space.
 
-$A$ is the input word matrix such that the *i-th column of $A$ is the embedded vector of dimension \textit{dim} for word $w_{i}$ when it is an input to this model. 
-Similarly, B is the output word matrix. The *j-th row of B is an embedded vector of dimension \textit{dim} for word $w_j$ when it is an output of the model. 
+$A$ is the input word matrix such that the i-th column of $A$ is the embedded vector of dimension \textit{dim} for word $v_{i}$ when it is an input to this model. 
+Similarly, B is the output word matrix. The j-th row of B is an embedded vector of dimension \textit{dim} for word $v_j$ when it is an output of the model. 
 
 
 Let's introduce some new notations:
@@ -159,11 +154,11 @@ Let's introduce some new notations:
 \end{table}
 }
 
-The input matrix A converts our encoded input bag of words ($\mathbf{x}_{(C_t^{(c)})}$) into a representation in a lower dimensionality.
+The input matrix A converts our encoded input bag of words ($\mathbf{\bar x} $) into a representation in a lower dimensionality.
 
 Let's denote our hidden representation:
 \begin{align}
- \mathbf{h}_t = A.\mathbf{x}_{(\mathcal{C}_t^{(c)})}
+ \mathbf{h}_t = A.\mathbf{\bar x}
 \end{align}
 
 Finally, this hidden representation will be decoded with the output matrix B to be able to compare it with our target word. Since we are in a single labeled multiclass case, the use of softmax function is adapted to sum our probabilities to 1. In short, in CBOW we define the probability of occurence of each word of the vocabulary, given a context $\mathcal{C}_t^{(c)}$ (our model), as:
@@ -171,25 +166,25 @@ Finally, this hidden representation will be decoded with the output matrix B to 
 \begin{align}
  \mathbf{\hat y}_t = 
 	\begin{bmatrix} 
-		P(w_{1^{(v)}} | \mathcal{C}_t^{(c)}) \\
+		P(v_1 | \mathcal{C}_t^{(c)}) \\
 		\vdots \\
-		P(w_{t^{(v)}} | \mathcal{C}_t^{(c)})\\
+		P(v_t | \mathcal{C}_t^{(c)})\\
 		\vdots \\
-		P(w_{|V|^{(v)}} | \mathcal{C}_t^{(c)})
+		P(v_{|V|} | \mathcal{C}_t^{(c)})
 	\end{bmatrix} = 
-	softmax(B.A.\mathbf{x}_{(\mathcal{C}_t^{(c)})})
+	softmax(B.A.\mathbf{\bar x} )
 \end{align}
 
 Ie $\forall i \in [1, |V|]$:
 \begin{align}
- P(w_{i} | \mathcal{C}_t^{(c)})= 
- 	&\frac{  [e^{B.A.\mathbf{x}_{(\mathcal{C}_t^{(c)})}}]_i}
- 	{\sum_{j=1}^{|V|} [e^{B.A.\mathbf{x}_{(\mathcal{C}_t^{(c)})}}]_j} \\
+ P(v_i | \mathcal{C}_t^{(c)})= 
+ 	&\frac{  [e^{B.A.\mathbf{\bar x}}]_i}
+ 	{\sum_{j=1}^{|V|} [e^{B.A.\mathbf{\bar x}} ]_j} \\
  	\text{      with}& []_i \text{ meaning the i-th element of a vector}
 \end{align}
 
 
-Whereas the true target is noted:
+Whereas the true target is noted (target word in vocabulary):
 \begin{align}
  \mathbf{y}_t = 
 	\begin{bmatrix} 
@@ -199,13 +194,13 @@ Whereas the true target is noted:
 		\vdots \\
 		0
 	\end{bmatrix} 
-	= \mathbf{x}_t
+	= \mathbf{x}_{V(w_t)}
 \end{align}
 
 
-Since $\mathbf{y}_t$ is a one-hot vector, maximizing log-likelihood of $P(w_t | \mathcal{C}_t^{(c)})$ is equivalent to minimizing the cross entropy of $(\mathbf{\hat y}_t, \mathbf{y}_t)$:
+Since $\mathbf{y}_t$ is a one-hot vector (with 1 at location $V(w_t)$), maximizing log-likelihood of $P(w_t | \mathcal{C}_t^{(c)})$ is equivalent to minimizing the cross entropy of $(\mathbf{\hat y}_t, \mathbf{y}_t)$:
 \begin{align}
-E(\mathbf{\hat y}_t, \mathbf{y}_t) &= - \mathbf{y}_t^{\top} log(\mathbf{\hat y}_t) = - log(P(w_t | \mathcal{C}_t^{(c)}))
+E(\mathbf{\hat y}_t, \mathbf{y}_t) &= - \mathbf{y}_t^{\top} log(\mathbf{\hat y}_t) = - log(P(v_{V(w_t)} | \mathcal{C}_t^{(c)})) =- log(P(w_t | \mathcal{C}_t^{(c)}))
 \end{align}
 
 We can represent it as the following multilayer network:
@@ -259,7 +254,7 @@ We can represent it as the following multilayer network:
 
 \end{tikzpicture}
 
-Matrices A and B are updated using gradient descent and gradient retro-propagation. Update formulas can be found in \cite{yolo}
+Matrices A and B are updated using gradient descent and gradient retro-propagation.
 
 \subsubsection{Using CBOW embeddings for classification}
 
@@ -437,22 +432,67 @@ We already studied in previous section how we could compute efficient multi-clas
 In this section, we will first make a quick review of the major algorithms and scoring metrics for multi-label classification, mainly based on the ~\cite[following paper]{MultilabelReview}. Then we will focus on another common approach in neural networks not detailed in the previous paper, that inspired us to modify fasttext algorithm to make it natively support multilabel classification.
 
 
-\subsection{Multiclass/multilabel metrics}
+\subsection{Multilabel metrics}
 
-\subsubsection{Common metrics}
+Suppose $\mathcal{X} = \mathbb{R}^d$ denotes the \textit{d}-dimensional instance space, and  $\mathcal{Y} = \{y_1, y_2, \dots, y_K \}$ the label space with $K$ possible class labels.
 
-Number of classes.
+Let's denote $\mathcal{D} = \{(\mathbf{x}_i, Y_i) | 1 \leq i \leq n\}$ our learning dataset. For each multi-label example $(\mathbf{x}_i, Y_i)$, $Y_i \subseteq \mathcal{Y}$ is the set of labels for $\mathbf{x}_i$.
 
-Label cardinality: average number of labels per sample.
+\subsubsection{Common dataset description metrics}
 
-Label density: average number of labels per example normalized by number of classes.
+\begin{itemize}
+	\item \textbf{Number of classes}: $|\mathcal{Y}| = K$.
+	\item \textbf{Label cardinality}: $\frac{1}{n}\sum_{i=1}^n |Y_i|$ (average number of labels per sample).
+	\item \textbf{Label density}: $\frac{1}{n \times |\mathcal{Y}|}\sum_{i=1}^n |Y_i|$ (average number of labels per example normalized by number of classes).
+	\item \textbf{Label diversity}: $|\{Y | \exists \mathbf{x}:(\mathbf{x}, Y) \in \mathcal{D}\}|$ (the number of distinct label sets in learning set).
+\end{itemize}
 
-Label diversity: the number of distinct label sets.
 
 \subsubsection{Scoring metrics}
 
-Multiclass classification metrics in appendix, here only multilabel versions we used.
+In multi-label context, scoring metrics can be divided in two groups \cite{MultilabelReview}: 
+\begin{itemize}
+	\item sample-wise metrics: how well we performed on a sample
+	\item label-wise metrics: how well we performed on a given class
+\end{itemize}
 
+In our case, the metrics of most interest are label-wise metrics, we will detail those we consider, which are derived from binary classification scoring metrics.  
+
+Denoting $f$ our classifier, let's define the following metrics, for each class independently:
+$\forall j \in [1, K]$:
+{\ttfamily
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ll}
+        \toprule
+        $TP_j = |\{ \mathbf{x}_i | y_j \in Y_i \wedge y_j \in f(\mathbf{x}_i), 1 \leq i \leq n \}|$          &    $true\ positives\ for\ class\ j$ \\
+        $FP_j = |\{ \mathbf{x}_i | y_j \notin Y_i \wedge y_j \in f(\mathbf{x}_i), 1 \leq i \leq n \}|$          &    $false\ positives\ for\ class\ j$ \\
+        $TN_j = |\{ \mathbf{x}_i | y_j \notin Y_i \wedge y_j \notin f(\mathbf{x}_i), 1 \leq i \leq n \}|$       &    $true\ negatives\ for\ class\ j$  \\
+        $FN_j = |\{ \mathbf{x}_i | y_j \in Y_i \wedge y_j \notin f(\mathbf{x}_i), 1 \leq i \leq n \}|$       &    $false\ negatives\ for\ class\ j$  \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+}
+
+Let $B(TP_j, FP_j, TN_j, FN_j)$ represent some binary classification metric among those of most interest for us: Precision, Recall, $F_{\beta}$ score (detailed in appendix). 
+
+These metrics can be considered as \textit{local} metrics: each is specific to a given class. To obtain what we can could call \textit{global} metrics, that represent performance on all classes, two kinds of averaging can be considered:
+
+\begin{itemize}
+	\item Macro-averaging: equal weights for labels.
+	\begin{align}
+		B_{macro}(h) = \frac{1}{K}\sum_{j=1}^K B(TP_j, FP_j, TN_j, FN_j)
+	\end{align}
+	\item Micro-averaging: equal weights for samples.
+	\begin{align}
+		B_{micro}(h) = B(\sum_{j=1}^K TP_j, \sum_{j=1}^K FP_j,\sum_{j=1}^K  TN_j,\sum_{j=1}^K  FN_j)
+	\end{align}
+\end{itemize}
+
+
+Those two averaging answer to different challenges. A high micro-averaged score can hide very poor results on classes with few occurences. A high macro-averaged score will give the same impact for a class with 1000 samples and another class of 2 samples. Both have their benefits and weaknesses depending on your goal.
+
+In our case, our interest was more focused on micro-averaging, and classes with too poor local metrics are filtered after prediction.
 
 \subsection{Output size challenge}
 
@@ -494,7 +534,7 @@ Representative algorithms include:
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.6]{./images/machine-learning/multi-label-approaches.png}
-\caption{Categorization of representative multi-label learning algorithms being reviewed, \cite{MultilabelReview}.}
+\caption{Categorization of representative multi-label learning algorithms reviewed in \cite[this paper]{MultilabelReview}.}
 \label{fig:multilabelOverview}
 \end{figure}
 
@@ -738,6 +778,10 @@ Considering how simple is Fasttext linear classifier, results can be considered 
 	\item detail about achievements
 \end{itemize}
 
+
+
+
+
 \pagebreak
 \section{Calibration}
 
@@ -752,6 +796,13 @@ After producing our first predictions, we soon realized that we needed more cont
 	\item on other classes it could be the opposite, a 0.5 score could be right 0.8 of the time on average
 \end{itemize}
 
+\textbf{Calibration plot}
+
+Calibration plot is a method that shows us how well the classifier is calibrated \cite{Calibration}: $$x\ axis = true\ probability,\ y\ axis=predicted\ probability$$
+
+True probabilities are calculated for (sub)sets of examples with the same predicted score $P(y=1|X) \in [c-\delta, c+\delta]$: $$ p_{true}^c = \frac{P_{sub}^c}{P_{sub}^c + N_{sub}^c}$$ with $P_{sub}^c, N_{sub}^c$ being the proportion on positives and negative examples in a given subset with predicted probabilities $[c-\delta, c+\delta]$. The calibration plot of a perfectly calibrated classifier will be a diagonal.
+
+
 
 In this section we will first present a naïve calibration we implemented, and then introduce more commonly adopted strategies.
 
@@ -759,27 +810,44 @@ In this section we will first present a naïve calibration we implemented, and t
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.5]{./images/calibration/precision_recall_curve.png}
-\caption{Global precision/recall curve for attribute 'product labels' (organic, made in France etc).}
-\end{figure}
-
-
-\begin{figure}[H]
-\centering
 \includegraphics[scale=0.40]{./images/calibration/islabeledby_calibration_curve.png}
 \caption{Calibration curve: true precision compared to predicted probabilities/scores.}
 \end{figure}
 
-TODO: use sklearn calibration curves.
+One possible naïve solution would be to build bins of samples around a given score, for instance all scores between 0.40 and 0.50, and estimate the precision of samples in this bin (all prediction whose scores is between 0.4 and 0.5), as the mean precision of that bin on a validation data-set.
 
 \subsection{More advanced calibration techniques}
 
-Two common approaches for performing calibration of probabilistic predictions are: 
+Major approaches for performing calibration of probabilistic predictions share the same idea: use obtained classification scores as features in an additional classifier (classifier providing scores). We could cite: 
 \begin{itemize}
-	\item a parametric approach based on Platt’s sigmoid model 
-	\item a non-parametric approach based on isotonic regression.
+	\item a parametric approach based on Platt’s sigmoid model: basically applying a logistic regression using classification scores as features, and original labels of a validation set as target \cite{Calibration}.
+	\item a non-parametric approach based on isotonic regression: the idea is to fit a piecewise-constant non-decreasing function (stair-step shaped) instead of logistic regression (but the idea is similar to Platt's approach).
+	\item a 'stacking-style' approach using classification scores as feature, but target are no longer original labels, but the thresholds bipartitioning labels with minimum misclassifications \cite{MultilabelReview}.
 \end{itemize}
-\cite{Calibration}
+
+In our case, we tryed some Platt's and stacking-style calibration techniques, yet given the low label density of our training set, we overfit.
+
+\subsection{Decision: precision versus recall}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{./images/calibration/islabeledby_global_curve.png}
+\caption{Global precision/recall curve for attribute 'product labels' (organic, made in France etc).}
+\end{figure}
+
+We can observe that if we apply a decision threshold of 0.48 on our prediction scores, we achieve:
+\begin{itemize}
+	\item a micro-average global precision of 0.80
+	\item a micro-average global recall of 0.82
+\end{itemize}
+
+Given a decision threshold we will either favor recall or precision, each of them serves a different business objective:
+\begin{itemize}
+	\item favoring precision ensure that we don't make mistakes when pushing a suggestion to our users, it's a low-risk strategy, but with less impact
+	\item favoring recall will ensure that we don't miss any suggestion that we could make on products (big impact), at the risk of being wrong sometimes.
+\end{itemize}
+
+The choice is a business choice, depending on what users favor. In our case, after some user interviews, it is clear that we prefer to favor precision. Users are frightened by wrong suggestions. Whereas the absence of suggestion has no negative impact.
 
 \section{Missing labels}
 
@@ -794,7 +862,12 @@ To overcome this challenge we adopted the following strategy:
 \begin{itemize}
 	\item make predictions based on available partially labeled data
 	\item enrich our predictions with precision estimation based on each class precision given prediction score (see calibration part)
-	\item bulk validate predictions which are not equal to products current attributes (for instance selecting predictions with estimated precision > 0.9)
+	\item bulk validate predictions which are not equal to products current attributes, based on:
+	\begin{itemize}
+		\item either textual search: our prediction are indexed in elasticsearch with product information allowing us to easily look for products whose description fields contain 'gluten'
+		\item either categorical search: we know that all alcohols should have a 'pregnant warning pictogram'
+		\item either by filtering predictions with the highest precision estimation
+	\end{itemize}
 	\item validated attributes predictions are stored in a database and override product attributes in classification workflow
 \end{itemize}
 
@@ -803,7 +876,7 @@ In the following graphs, you can see that after a initial prediction of flavors 
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.5]{./images/incompletely-labeled/validation-flavors.png}
-\caption{Validated flavors predictions. On 2017-12-09, we took some time to manually validate about 250 predictions with highest scores (only one was wrong).}
+\caption{Validated flavors predictions. On 2017-12-09, we validated about 250 predictions based on textual search.}
 \end{figure}
 
 
@@ -823,19 +896,65 @@ In the following graphs, you can see that after a initial prediction of flavors 
 
 This process helps us increase the label density on some classes, which led to increased score.
 
+When we use our predictions with best precision estimation to validate quickly, our process can be seen as a virtuous circle:
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.6]{./images/incompletely-labeled/virtuous-circle.png}
 \caption{Virtuous validation workflow.}
 \end{figure}
 
-
-Consider recall rather than precision. The presence of a lot a false negatives will impact precision, not recall.
+Inherently, when training a classifier to detect cases where our data is invalid on some samples, we generally put a stronger focus on precision rather than recall. Indeed:
+\begin{itemize}
+	\item in multilabel case, our invalid data is in nearly all cases missing values: which will lead to negatives instead of positives in our dataset.
+	\item in case we predict a sample as positive for a given class, unfortunatly we will count it as a false positive instead of a true positive.
+	\item thus it will impact recall, not precision.
+\end{itemize}
 
 \subsection{Iterative approach to bootstrap new classes}
-Manually label some products with new classes, then focus validation on these products. The validated suggestions will be used in next classification workflow.
 
+It is sometimes necessary to adopt a pro-active approach on some classes with low scores or very low number of occurences. 
+For instance, when we split a 'kind' (category) in multiple more detailed kinds.
 After some iterations, there might be enough occurences to ensure sufficient scores.
+
+\section{Evaluate results}
+
+\subsection{Assess task difficulty}
+Task difficulty can be assessed differently for each predicted field. It is dependent on multiple factors:
+\begin{itemize}
+	\item output size
+	\begin{itemize}
+		\item multiclass vs multilabel
+		\item number of distinct classes
+	\end{itemize}
+	\item number of training samples
+	\begin{itemize}
+		\item dataset size
+		\item classes and label densities: it will be difficult to predict labels that nearly never occur
+	\end{itemize}
+	\item is the information present in some form in features
+\end{itemize}
+
+\begin{tabularx}{\textwidth}{|l|r|X|X|X|X|X|X|r|}
+\toprule
+field & type &  label\ count & label\ cardinality &  label\ density &  label\ diversity &  nb\ classes &  nb\ samples & presence \\
+\midrule
+hazard			      &          multilabel &    2243     &     0.0408 &         0.0082 &             1090 &           5 &       54990 & very low\\
+flavors               &          multilabel &    355      &     0.0065 &         0.0006 &              253 &          11 &       54990 & high \\
+kind                  &          multiclass &    43335    &     1.0000 &         0.0057 &              175 &         175 &       43335 & low \\
+ingredients			  &          multilabel &    54259    &     0.9867 &         0.0111 &            16810 &          89 &       54990 & high \\
+labels 		          &          multilabel &    22803    &     0.4147 &         0.0078 &             7078 &          53 &       54990 & medium \\
+\bottomrule
+\end{tabularx}
+
+
+\subsection{Assess how well our model perform}
+
+
+
+\subsection{How much better can we do}
+
+
+
 
 \section{To investigate further}
 
@@ -864,12 +983,12 @@ This similarity function could be used as a coefficient in the cost function:
 	\item if we predict 'bread' instead of 'water', the cost would be raised because the prediction is completely wrong
 \end{itemize}
 
+\subsection{Enforce better calibration / decision}
+\subsection{Use images}
+For now, use of google vision API to product text: labels, reading. This could be used in some neural networks embedding different types of objects.
+\subsection{POS Tagging strategies to predict some fields}
+Packaging, brand, etc..
 
-\subsection{Improve decision function}
-\subsubsection{F-beta score in case of not fully labeled data-set}
-\subsubsection{Threshold strategies based on multilabel scores output}
-
-\subsection{Enforce better calibration}
 \subsection{Tuning strategies}
 
 For now: 
@@ -877,3 +996,14 @@ For now:
 Quite random. Intuition. All dimensions except one or two. Difficult to understand.
 
 \subsection{Higher order multilabel strategies}
+Possible strategies include:
+\begin{itemize}
+	\item add layer to Fasttext neural network
+	\item add independent layer, at the end: calibration (that will find correlation between classes)
+\end{itemize}
+
+Yet, these strategies are possible only with datasets with sufficient samples, otherwise we will overfit.
+
+\subsection{Cross validation for sets with low label density}
+
+\subsection{More workflow tests}

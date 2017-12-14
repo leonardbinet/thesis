@@ -41,6 +41,9 @@
 \usepackage{outlines}
 % for quotes
 \usepackage{dirtytalk}
+% for size of enumerate/itemize
+\usepackage{enumitem}
+\setlist{noitemsep}
 
 % for diagrams
 \usepackage{tikz}
@@ -92,34 +95,7 @@
 \renewcommand{\labelitemii}{$\star$}
 
 % For json
-\usepackage{bera}% optional: just to have a nice mono-spaced font
-\usepackage{listingsutf8}
-\usepackage{xcolor}
-
-\colorlet{punct}{red!60!black}
-\definecolor{background}{HTML}{EEEEEE}
-\definecolor{delim}{RGB}{20,105,176}
-\colorlet{numb}{magenta!60!black}
-
-\lstdefinelanguage{json}{
-    basicstyle=\normalfont\ttfamily,
-    numbersep=8pt,
-    showstringspaces=false,
-    breaklines=true,
-    frame=lines,
-    backgroundcolor=\color{background},
-    extendedchars=false,
-    escapeinside={\%*}{*)},
-    breakatwhitespace=true,
-    inputencoding=utf8,
-    literate=
-     *{:}{{{\color{punct}{:}}}}{1}
-      {,}{{{\color{punct}{,}}}}{1}
-      {\{}{{{\color{delim}{\{}}}}{1}
-      {\}}{{{\color{delim}{\}}}}}{1}
-      {[}{{{\color{delim}{[}}}}{1}
-      {]}{{{\color{delim}{]}}}}{1},
-}
+\usepackage{minted}
 
 % -----------------------------------------------------------------
 %                              Tools
@@ -152,7 +128,7 @@
 
 % -----------------------------------------------------------------
 
-\geometry{top=2.5cm,left=2.6cm,right=2.6cm,bottom=2.5cm,headsep=1cm}
+\geometry{top=2.5cm,left=2.4cm,right=2.4cm,bottom=2.5cm,headsep=1cm}
 \hypersetup{pdfborder={0 0 0},
 colorlinks,urlcolor=blue,linkcolor=blue,citecolor=blue,filecolor=blue,
 pdftitle=}
@@ -185,9 +161,9 @@ pdftitle=}
 \include{concl}
 \cleardoublepage
 \appendix
-\include{p_logistic_regression_multiclass_multilabel}
 \include{p_classification_metrics}
 \include{p_fasttext_params}
+\include{p_logistic_regression_multiclass_multilabel}
 \cleardoublepage
 
 \bibliographystyle{plain}
