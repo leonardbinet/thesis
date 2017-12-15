@@ -8,7 +8,7 @@ When dealing with natural language, one of the most important common denominator
 
 In this section, we will quickly describe Mikolov's Word2Vec models (Continuous Bag of Word, and Skip-Gram), that proposed a new way to build word embeddings based on words coocurrence in a context window.
 
-Then we will explain in more detail recent work from Facebook, that proposes new models based on Mikolov's work, allowing the use of sub-word information, and proposing a novel way to compute classification tasks while learning embeddings.
+Then we will present in more details a recent work from Facebook, that proposes new models based on Mikolov's work, proposing a novel way to compute classification tasks while learning embeddings.
 
 \subsection{Probability of sequence of tokens}
 
@@ -57,7 +57,7 @@ With:
 		\vdots\\
 		0
 	\end{bmatrix} \\
-	\mathbf{\bar x_t} &= \frac{\mathbf{x}_{V(t-c)} + \mathbf{x}_{V(t-c+1)} ... + \mathbf{x}_{V(t+c)}}{|C_t^{(c)}|}
+	\mathbf{\bar x_t} &= \frac{\mathbf{x}_{V(w_{t-c})} + \mathbf{x}_{V(w_{t-c+1})} ... + \mathbf{x}_{V(w_{t+c})}}{|C_t^{(c)}|}
 \end{align}
 
 Taking our corpus \say{\textit{To classify you have to learn.}}:
@@ -90,10 +90,10 @@ Taking our corpus \say{\textit{To classify you have to learn.}}:
 
 \subsection{Word2Vec models}
 
-Word2vec consists in either of two model architectures to produce a representation of words: \textbf{continuous bag-of-words} (CBOW) or \textbf{skip-gram}. 
+Word2vec consists in either one of two model architectures to produce a representation of words: \textbf{continuous bag-of-words} (CBOW) or \textbf{skip-gram}. 
 
 In the continuous bag-of-words architecture, the model predicts the current word from a window of surrounding context words. The order of context words does not influence prediction (bag-of-words assumption). In the continuous skip-gram architecture, the model uses the current word to predict the surrounding window of context words. 
-The skip-gram architecture weighs nearby context words more heavily than more distant context words.
+The skip-gram architecture weighs nearby context words more than distant context words.
 
 Both models can be trained from an unlabeled large corpus of text and rely on the same trick: transform unlabeled data into a labeled dataset for supervised learning to unveil hidden dependencies between words.
 
@@ -258,11 +258,11 @@ Matrices A and B are updated using gradient descent and gradient retro-propagati
 
 \subsubsection{Using CBOW embeddings for classification}
 
-Using CBOW algorithm would provide you this A matrix, which is basically a lookup table in which you can extract the representation of any word of your vocabulary in your embedding space (of size $dim <<< |V|$).
+Using CBOW algorithm would provide you this A matrix, which is basically a lookup table in which you can extract the dense representation of any word of your vocabulary in your embedding space (of size $dim <<< |V|$).
 
 Word2Vec treats each word in corpus like an atomic entity and generates a vector for each word.
 
-Transforming a text input in a numerical vector is then possible, and your numerical vector could then be used as input for any classification algorigthm to perform classification tasks.
+Transforming a text input in a dense numerical vector with semantic information is then possible, and your numerical vector could then be used as input for any classification algorigthm to perform classification tasks.
 
 \subsection{Fasttext}
 
@@ -380,7 +380,7 @@ The model is very similar to continuous bag of words model, except that instead 
 \end{tikzpicture}
 Note: 
 \begin{itemize}
-	\item for readibility just 7 words of the input features are considered.
+	\item for readibility only 7 words of the input features are considered.
 	\item fasttext first merge all features as one corpus to build vocabulary ($\rightarrow$ size of matrix A)
 	\item in practice, dimension of the hidden layer is between 50 and 300
 	\item input matrix A embeddings are specialized for this classification task and may not behave well for another classification task
@@ -407,7 +407,7 @@ Each word can be considered as a set of character ngrams. In Fasttext, a word ve
 \end{multicols}
 Note: this behavious is controlled through hyperparameters controlling smallest ngram size ([minn]) and largest ngram size ([maxn]). For performance and memory size reasons, another hyperparameter ([bucket]) controls the maximum total number of tokens (word tokens + subword tokens).
 
-This provide the following advantages:
+This provides the following advantages:
 \begin{itemize}
 	\item Generate better word embeddings for rare words (even if words are rare their character n grams are still shared with other words - hence the embeddings can still be good). In word2vec a rare word (e.g. 10 occurrences) has fewer neighbors to be tugged by, in comparison to a word that occurs 100 times - the latter has more neighbor context words and hence is tugged more often resulting in better word vectors.
 	\item Out of vocabulary words - they can construct the vector for a word from its character n grams even if word doesn't appear in training corpus. The choice of hyper parameters controlling the minimum and maximum n-gram sizes has to be chosen.
@@ -415,7 +415,7 @@ This provide the following advantages:
 
 Concretely, the use of subword information will only impact:
 \begin{itemize}
-	\item how is built the vocabulary. It will not only contain words of the training corpus, but also all ngrams of these words. The vocabulary will thus be much bigger, but with shared properties between different words.
+	\item how the vocabulary is built. It will not only contain words of the training corpus, but also all ngrams of these words. The vocabulary will thus be much bigger, but with shared properties between different words.
 	\item how features are encoded in this vocabulary: 'Do you want this apple' will not be encoded as the average of 5 one hot vectors \{do, you, want, this, apple\}, but as the average of one hot vectors of all tokens contained in the sentence \{<do>, <you, you>, <wa, wan, ant, nt> ...\}.
 \end{itemize}
 
@@ -433,7 +433,7 @@ In this section, we will first make a quick review of the major algorithms and s
 
 \subsection{Multilabel metrics}
 
-Suppose $\mathcal{X} = \mathbb{R}^d$ denotes the \textit{d}-dimensional instance space, and  $\mathcal{Y} = \{y_1, y_2, \dots, y_K \}$ the label space with $K$ possible class labels.
+Suppose $\mathcal{X} = \mathbb{R}^d$ denotes the \textit{d}-dimensional feature space, and  $\mathcal{Y} = \{y_1, y_2, \dots, y_K \}$ the label space with $K$ possible class labels.
 
 Let's denote $\mathcal{D} = \{(\mathbf{x}_i, Y_i) | 1 \leq i \leq n\}$ our learning dataset. For each multi-label example $(\mathbf{x}_i, Y_i)$, $Y_i \subseteq \mathcal{Y}$ is the set of labels for $\mathbf{x}_i$.
 
@@ -442,7 +442,7 @@ Let's denote $\mathcal{D} = \{(\mathbf{x}_i, Y_i) | 1 \leq i \leq n\}$ our learn
 \begin{itemize}
 	\item \textbf{Number of classes}: $|\mathcal{Y}| = K$.
 	\item \textbf{Label cardinality}: $\frac{1}{n}\sum_{i=1}^n |Y_i|$ (average number of labels per sample).
-	\item \textbf{Label density}: $\frac{1}{n \times |\mathcal{Y}|}\sum_{i=1}^n |Y_i|$ (average number of labels per example normalized by number of classes).
+	\item \textbf{Label density}: $\frac{1}{n \times |\mathcal{Y}|}\sum_{i=1}^n |Y_i|$ (average number of labels per sample normalized by number of classes).
 	\item \textbf{Label diversity}: $|\{Y | \exists \mathbf{x}:(\mathbf{x}, Y) \in \mathcal{D}\}|$ (the number of distinct label sets in learning set).
 \end{itemize}
 
@@ -524,8 +524,8 @@ Some adaptative algorithm exist for lazy learning techniques (kNN), decision tre
 This category of algorithms tackle multi-label learning problem by transforming it into other well-established learning scenarios (binary or multiclass classification scenarios). 
 Representative algorithms include:
 \begin{itemize}
- \item Binary Relevance: which transform the task of multi-label learning into the task of binary classification (first-order)
- \item Classifier Chains: which transform the task of multi-label learning into the task of binary classification (high-order)
+ \item Binary Relevance: which transforms the task of multi-label learning into the task of binary classification (first-order)
+ \item Classifier Chains: which transforms the task of multi-label learning into the task of binary classification (high-order)
  \item Calibrated Label Ranking: which transforms the task of multi-label learning into the task of label ranking (second-order)
  \item Random k-labelsets which transforms the task of multi-label learning into the task of multi-class classification (high-order)
 \end{itemize}
@@ -538,22 +538,9 @@ Representative algorithms include:
 \end{figure}
 
 
-\subsection{Considered approaches}
 
-In our case, the possible approaches were:
-\begin{itemize}
-	\item 'Word Embedding / Multi-label Classification':
-	\begin{itemize}
-		\item first learn general purpose word embeddings
-		\item and then apply any multi-label classifier strategy
-	\end{itemize}
-	\item 'Fasttext / Problem Transform approach'
-	\begin{itemize}
-		\item use fasttext as binary/multiclass classifier
-		\item as input for a problem transform approach: binary relevance, random-k-labelsets (classifier chains was not adaptable to fasttext)
-	\end{itemize}
-	\item adapt fasttext to support multi-label: learn simultanously embeddings and classifier parameters in multilabel context
-\end{itemize}
+
+\subsection{Multilabel text categorization}
 
 \subsubsection{Project constraints}
 
@@ -565,14 +552,40 @@ Among our objectives were:
 	\item prepare real-time prediction
 \end{itemize}
 
+
+\subsubsection{Considered approaches}
+To perform text multilabel categorization, the possible approaches were:
+\begin{enumerate}
+	\item First compute word embeddings to build dense representation of input, then apply any multi-label classification approach:
+	\begin{itemize}
+		\item Adaptative approach with specific classifiers
+		\item Or Problem Transform approach with any possible classifier
+	\end{itemize}
+	\item Use Fasttext as base classifier in any compatible problem transformation approach:
+	\begin{itemize}
+		\item binary relevance
+		\item random-k labelsets
+		\item (classifier chains were not compatible with fasttext model)
+	\end{itemize}
+	\item Adapt fasttext to support multi-label: learn simultanously embeddings and classifier parameters in multilabel context
+\end{enumerate}
+
+
 Our first experiments with Fasttext encouraged us to try to use it. Reasons for that choice were:
 \begin{itemize}
 	\item subword ability
 	\item encouraging scores
 	\item training speed
+	\item specific embeddings for each classification task
 	\item small RAM consumption
 	\item quality of implementation
 	\item well maintained code
+\end{itemize}
+
+We initially considered using Fasttext as base classifier in problem transform approaches. The scores were very satisfying using binary relevance, yet it appeared that these approaches were too greedy:
+\begin{itemize}
+	\item in terms of computationnal time
+	\item in terms of model size
 \end{itemize}
 
 \subsection{How we adapted Fasttext to multilabel}
@@ -782,22 +795,36 @@ After producing our first predictions, we soon realized that we needed more cont
 	\item on other classes it could be the opposite, a 0.5 score could be right 0.8 of the time on average
 \end{itemize}
 
+In this section we will first present some calibration metrics, a naïve calibration method, and then introduce more commonly adopted strategies we tried.
+
 \textbf{Calibration plot}
 
 Calibration plot is a method that shows us how well the classifier is calibrated \cite{Calibration}: $$x\ axis = true\ probability,\ y\ axis=predicted\ probability$$
 
 True probabilities are calculated for (sub)sets of examples with the same predicted score $P(y=1|X) \in [c-\delta, c+\delta]$: $$ p_{true}^c = \frac{P_{sub}^c}{P_{sub}^c + N_{sub}^c}$$ with $P_{sub}^c, N_{sub}^c$ being the proportion on positives and negative examples in a given subset with predicted probabilities $[c-\delta, c+\delta]$. The calibration plot of a perfectly calibrated classifier will be a diagonal.
 
+\textbf{Calibration Error: Brier Score}
 
+The Brier score is a proper score function that measures the accuracy of probabilistic predictions. The Brier score can be thought of as either a measure of the calibration of a set of probabilistic predictions. More precisely, across all items $i\in{1...N}$ in a set of $N$ predictions, the Brier score measures the mean squared difference between:
+\begin{itemize}
+    \item The predicted probability $\hat{P}(y_i|x_i)$ assigned to the possible outcomes for $x_i$
+    \item The actual outcome $y_i$
+\end{itemize}
+$$\text{Brier Score} = \frac{1}{N} \sum \limits_{i=0}^N (\hat{P}(y_i|x_i) - y_i)^2$$
 
-In this section we will first present a naïve calibration we implemented, and then introduce more commonly adopted strategies.
+Therefore, the lower the Brier score is for a set of predictions, the better the predictions are calibrated. \cite{wiki15, Ya91}
+
+In our case we will consider a \textit{stratified Brier Score} that takes into account class imbalance:
+$$BS^+ = \frac{\sum \limits_{y_i=1} (y_i - \hat{P}(y_i|x_i))^2}{N_{pos}}$$
+$$BS^- = \frac{\sum \limits_{y_i=0} (y_i - \hat{P}(y_i|x_i))^2}{N_{neg}}$$
+
 
 \subsection{Naïve calibration}
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.40]{./images/calibration/islabeledby_calibration_curve.png}
-\caption{Calibration curve: true precision compared to predicted probabilities/scores.}
+\includegraphics[scale=0.37]{./images/calibration/islabeledby_calibration_curve.png}
+\caption{Calibration curve: true precision compared to predicted probabilities/scores on testing-set.}
 \end{figure}
 
 One possible naïve solution would be to build bins of samples around a given score, for instance all scores between 0.40 and 0.50, and estimate the precision of samples in this bin (all prediction whose scores is between 0.4 and 0.5), as the mean precision of that bin on a validation data-set.
@@ -806,8 +833,8 @@ One possible naïve solution would be to build bins of samples around a given sc
 
 Major approaches for performing calibration of probabilistic predictions share the same idea: use obtained classification scores as features in an additional classifier (classifier providing scores). We could cite: 
 \begin{itemize}
-	\item a parametric approach based on Platt’s sigmoid model: basically applying a logistic regression using classification scores as features, and original labels of a validation set as target \cite{Calibration}.
-	\item a non-parametric approach based on isotonic regression: the idea is to fit a piecewise-constant non-decreasing function (stair-step shaped).
+	\item a parametric approach based on Platt’s sigmoid model: basically applying a logistic regression using classification scores as features, and original labels of a validation set as target.
+	\item a non-parametric approach based on isotonic regression: the idea is to fit a piecewise-constant non-decreasing function (stair-step shaped) \cite{Calibration}.
 	\item a 'stacking-style' approach using classification scores as feature, but target are no longer original labels, but the thresholds bipartitioning labels with minimum misclassifications \cite{MultilabelReview}.
 \end{itemize}
 
@@ -818,13 +845,13 @@ In our case we did not discriminate classes while learning isotonic regression t
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.40]{./images/calibration/calibration_val_before.png}
-\caption{Calibration curve on validation set BEFORE isotonic regression.}
+\caption{Calibration curve on validation set BEFORE isotonic calibration.}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.40]{./images/calibration/calibration_val_after.png}
-\caption{Calibration curve on validation set AFTER isotonic regression.}
+\caption{Calibration curve on validation set AFTER isotonic calibration.}
 \end{figure}
 
 
