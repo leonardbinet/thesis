@@ -419,10 +419,9 @@ Concretely, the use of subword information will only impact:
 	\item how features are encoded in this vocabulary: 'Do you want this apple' will not be encoded as the average of 5 one hot vectors \{do, you, want, this, apple\}, but as the average of one hot vectors of all tokens contained in the sentence \{<do>, <you, you>, <wa, wan, ant, nt> ...\}.
 \end{itemize}
 
-\subsubsection{Miscellanous}
+\subsubsection{Optimization}
 
-Optimization, hierarchical softmax, negative sampling, word-n-grams, text preprocessing etc..
-
+Fasttext comes with some optimizations to compute efficent softmax approximations: hierarchical softmax and negative sampling. These techniques are detailed in \cite{fasttextTricks}.
 
 \pagebreak
 \section{Multilabel classification}
@@ -558,6 +557,13 @@ In our case, the possible approaches were:
 
 \subsubsection{Project constraints}
 
+Among our objectives were:
+\begin{itemize}
+	\item minimize the complexity of the workflow
+	\item minimize number of different languages in the whole pipeline (previously spark)
+	\item run fitting on single machine
+	\item prepare real-time prediction
+\end{itemize}
 
 Our first experiments with Fasttext encouraged us to try to use it. Reasons for that choice were:
 \begin{itemize}
@@ -567,17 +573,6 @@ Our first experiments with Fasttext encouraged us to try to use it. Reasons for 
 	\item small RAM consumption
 	\item quality of implementation
 	\item well maintained code
-\end{itemize}
-
-TODO: from Spark to python
-
-Since we knew that the multi-labeled attributes we wanted to predict are insufficiently labeled, we wanted a fast to train model that could be computed regularly (daily). Because of the iterative improvement and daily evolution of our products data. 
-
-\begin{itemize}
-	\item wanted to have same language in the whole pipeline (previously spark)
-	\item run fitting on single machine
-	\item prepare real-time prediction
-
 \end{itemize}
 
 \subsection{How we adapted Fasttext to multilabel}
@@ -812,11 +807,26 @@ One possible naïve solution would be to build bins of samples around a given sc
 Major approaches for performing calibration of probabilistic predictions share the same idea: use obtained classification scores as features in an additional classifier (classifier providing scores). We could cite: 
 \begin{itemize}
 	\item a parametric approach based on Platt’s sigmoid model: basically applying a logistic regression using classification scores as features, and original labels of a validation set as target \cite{Calibration}.
-	\item a non-parametric approach based on isotonic regression: the idea is to fit a piecewise-constant non-decreasing function (stair-step shaped) instead of logistic regression (but the idea is similar to Platt's approach).
+	\item a non-parametric approach based on isotonic regression: the idea is to fit a piecewise-constant non-decreasing function (stair-step shaped).
 	\item a 'stacking-style' approach using classification scores as feature, but target are no longer original labels, but the thresholds bipartitioning labels with minimum misclassifications \cite{MultilabelReview}.
 \end{itemize}
 
-In our case, we tryed some Platt's and stacking-style calibration techniques, yet given the low label density of our training set, we overfit.
+In our case, we tryed some Platt's and stacking-style calibration techniques, yet given the low label density of our training set, we overfit. However applying isotonic regression provided encouraging results. 
+
+In our case we did not discriminate classes while learning isotonic regression to avoid overfit (micro-average). It was trained on a testing-set and applied on a validation-set. Below charts show results on validation-set before and after isotonic regression. The weighted Brier score slightly dropped from 0.448 to 0.425.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.40]{./images/calibration/calibration_val_before.png}
+\caption{Calibration curve on validation set BEFORE isotonic regression.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.40]{./images/calibration/calibration_val_after.png}
+\caption{Calibration curve on validation set AFTER isotonic regression.}
+\end{figure}
+
 
 \subsection{Decision: precision versus recall}
 
@@ -946,6 +956,8 @@ labels 		          &          multilabel &    22803    &     0.4147 &         0.
 
 \subsection{Assess how well our model perform}
 
+Here are the scores obtained applying on our classes scores a global threshold maximizing f1-score:
+
 \textbf{Micro average scores}
 \begin{tabular}{lrrr}
 \toprule
@@ -974,13 +986,17 @@ islabeledby           &   0.626 &    0.613 &  0.690 \\
 \bottomrule
 \end{tabular}
 
-As a reminder, in our case we will generally more consider 
-
+As a reminder:
+\begin{itemize}
+ 	\item in our case given the disparity of size classes we will generally consider micro rather than macro score.
+ 	\item macro scores are very impacted by the fact that many classes have very few occurences and perform badly
+ 	\item it is difficult to evaluate how much the errors are due to a wrongly qualified classifier, versus due to uncompletely labeled data. Indeed for a given decision threshold recall scores might be underestimated
+\end{itemize}
 
 
 \subsection{How much better can we do}
 
-
+To answer this question, one must first evaluate what is current data-quality. We can certainly do better but have no specific metrics to estimate it. Still we have reasons to be optimistic, the data we are relying on is quickly growing, which will naturally improve our models (our models local performances are strongly correlated to classes support), and we already managed to bootstrap many fields and classes. Plus the following section will cover our thoughts to improve our current workflow.
 
 
 \section{To investigate further}
@@ -1010,17 +1026,19 @@ This similarity function could be used as a coefficient in the cost function:
 	\item if we predict 'bread' instead of 'water', the cost would be raised because the prediction is completely wrong
 \end{itemize}
 
-\subsection{Enforce better calibration / decision}
-\subsection{Use images}
-For now, use of google vision API to product text: labels, reading. This could be used in some neural networks embedding different types of objects.
-\subsection{POS Tagging strategies to predict some fields}
-Packaging, brand, etc..
+\subsection{Use images as input}
+
+For now, use of google vision API to product text: labels, reading. 
+
+This extracted features could be used in our workflow, but we might also change our model to some neural networks embedding different types of objects. Facebook recently released a library to embbed different types of objects \cite[starspace]{wu2017starspace}.
+
+
+\subsection{Part of Speech Tagging strategies to predict some fields}
+Some attributes are usually present in description (brand, packaging etc). These element might be detectable through part of speech tagging methods.
 
 \subsection{Tuning strategies}
 
-For now: 
-
-Quite random. Intuition. All dimensions except one or two. Difficult to understand.
+For now tuning was done quite intuitively, but given the very large size of parameters space we have room for improvement.
 
 \subsection{Higher order multilabel strategies}
 Possible strategies include:
@@ -1033,6 +1051,11 @@ Yet, these strategies are possible only with datasets with sufficient samples, o
 
 \subsection{Cross validation for sets with low label density}
 
-Our 
+Our monitoring dashboard allow us to see scoring metrics evolution. These scoring metrics are computed at training stage on a testing set. We observed that some metrics were volatile because when not much support samples were available for a given field.
 
 \subsection{More workflow tests}
+We encountered some inconsistencies that appeared to be due to errors in the workflow. We are currently adding some more tests to avoid this kind of error in the future.
+
+\subsection{Estimate data-quality on predicted attributes on sample}
+One (time-consuming but) interesting experiment would be to manually assess data-quality on a sufficiently large and representative dataset. This would help us estimate our classifier real performances.
+
