@@ -39,7 +39,7 @@ Data quality can be evaluated through:
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.45]{./images/data-quality/data-quality.png}
+\includegraphics[scale=0.4]{./images/data-quality/data-quality.png}
 \caption{Example of a product that doesn't specify required fields.}
 \end{figure}
 
@@ -274,7 +274,7 @@ A part of this task is semi-automated: for instance, suggestions issued from bot
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.50]{./images/workflow/validation-suggestion.png}
+\includegraphics[scale=0.40]{./images/workflow/validation-suggestion.png}
 \caption{Suggestion validation by Alkemics.}
 \end{figure}
 
@@ -347,7 +347,7 @@ In our case, we can also check the validation/refusal ratio at validation stage:
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.50]{./images/monitoring/validation-acceptation-monitoring.png}
+\includegraphics[scale=0.5]{./images/monitoring/validation-acceptation-monitoring.png}
 \caption{Validation/Acceptation rates.}
 \end{figure}
 
@@ -362,7 +362,7 @@ A big effort has been made to build an internal suggestion validation dashboard.
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.50]{./images/data-quality/validation-dashboard.png}
+\includegraphics[scale=0.54]{./images/data-quality/validation-dashboard.png}
 \caption{Validation dashboard.}
 \end{figure}
 
@@ -396,7 +396,7 @@ That's why we build a service on a dedicated machine whose goal is to find the b
 
 \subsection{Bootstrap new classes/fields}
 
-Everyday at Alkemics, clients use our plateform, and the data changes, lives. Thus, unlike in kaggle competition, our datasets evolves.
+Everyday at Alkemics, clients use our plateform, and the data changes. Thus, unlike in kaggle competition, our datasets evolves.
 For instance, some new ingredients might appear, and at the beginning their low number of occurence might prevent the model to perform well.
 
 \begin{figure}[H]
@@ -406,5 +406,7 @@ For instance, some new ingredients might appear, and at the beginning their low 
 \end{figure}
 
 In that case we will use our validation dashboard. We would make a textual search to validate some related suggestions, or even create manually some suggestions. Sometimes, even some dozens of occurences are enough to bootstrap a new class and launch a virtuous circle for the model.
+
+This process will be covered in the next chapter, here \ref{fig:textualvalidation}.
 
 

@@ -203,7 +203,7 @@ Since $\mathbf{y}_t$ is a one-hot vector (with 1 at location $V(w_t)$), maximizi
 E(\mathbf{\hat y}_t, \mathbf{y}_t) &= - \mathbf{y}_t^{\top} log(\mathbf{\hat y}_t) = - log(P(v_{V(w_t)} | \mathcal{C}_t^{(c)})) =- log(P(w_t | \mathcal{C}_t^{(c)}))
 \end{align}
 
-We can represent it as the following multilayer network:
+We can represent it as the following single-layer network:
 
 \begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep]
     \tikzstyle{every pin edge}=[<-,shorten <=1pt]
@@ -288,7 +288,7 @@ With our target space being: \{happy, angry, neutral, curious\}, of size $K=4$
 
 What fasttext does, is that instead of first learning word embeddings on a corpus of text, it directly uses features to build specialized embeddings for this classification task.
 
-Denoting $\mathcal{Y} = \{y_i\}_{i \in [1, K]}$, and $\mathbf{x}$ the average of one hot-encoded vector of tokens of a feature in vocabulary $V$:
+Denoting $\mathbf{x}$ the average of one hot-encoded vector of tokens of a feature in vocabulary $V$:
 \begin{align}
  \mathbf{\hat y} 
  = 
@@ -318,7 +318,7 @@ Ie $\forall i \in [1, K]$:
 \end{align}
 
 
-Whereas the true target is noted:
+Whereas the true target (one hot encoded vector) is noted:
 \begin{align}
  \mathbf{y} = 
 	\begin{bmatrix} 
@@ -329,7 +329,6 @@ Whereas the true target is noted:
 		y_K
 	\end{bmatrix} 
 \end{align}
-wich is a one hot encoded vector corresponding to which is this sample label.
 
 
 The model is very similar to continuous bag of words model, except that instead of using the middle word of CBOW, we directly use a label. The architecture is then:
@@ -491,7 +490,6 @@ These metrics can be considered as \textit{local} metrics: each is specific to a
 
 Those two averaging answer to different challenges. A high micro-averaged score can hide very poor results on classes with few occurences. A high macro-averaged score will give the same impact for a class with 1000 samples and another class of 2 samples. Both have their benefits and weaknesses depending on your goal.
 
-In our case, our interest was more focused on micro-averaging, and classes with too poor local metrics are filtered after prediction.
 
 \subsection{Output size challenge}
 
@@ -533,7 +531,7 @@ Representative algorithms include:
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.6]{./images/machine-learning/multi-label-approaches.png}
-\caption{Categorization of representative multi-label learning algorithms reviewed in \cite[this paper]{MultilabelReview}.}
+\caption{Categorization of representative multi-label learning algorithms reviewed in \cite{MultilabelReview}.}
 \label{fig:multilabelOverview}
 \end{figure}
 
@@ -571,22 +569,41 @@ To perform text multilabel categorization, the possible approaches were:
 \end{enumerate}
 
 
-Our first experiments with Fasttext encouraged us to try to use it. Reasons for that choice were:
+\textit{Fasttext choice (rule out 1 approach)}
+
+Our first experiments with Fasttext encouraged us to try to use it. In addition to encouraging scores, reasons for that choice were:
+
+Some structural differences to other embeddings algorithms:
 \begin{itemize}
 	\item subword ability
-	\item encouraging scores
-	\item training speed
 	\item specific embeddings for each classification task
+\end{itemize}
+
+Implementation ease of use:
+\begin{itemize}
+	\item training speed
 	\item small RAM consumption
 	\item quality of implementation
 	\item well maintained code
 \end{itemize}
+Thus we decided to rule out 1 approach.
+
+\textit{Greedy Problem transformation approaches (rule out approach 2)}
 
 We initially considered using Fasttext as base classifier in problem transform approaches. The scores were very satisfying using binary relevance, yet it appeared that these approaches were too greedy:
 \begin{itemize}
 	\item in terms of computationnal time
 	\item in terms of model size
 \end{itemize}
+
+Indeed, possible problem transformation methods required to train many times (with $K$ being the number of classes):
+\begin{itemize}
+	\item Binary relevance: leading to $K$ (number of classes) independent trainings
+	\item Calibrated Label Ranking: leading to $K^2$ independent trainings
+	\item Random k-Labelsets: leading to approximately $2K$ independent trainings
+\end{itemize}
+
+We thus decided to adapt the fasttext classifier to a multilabel context, inspired by how neural networks work, this part is described in the following section.
 
 \subsection{How we adapted Fasttext to multilabel}
 
@@ -626,7 +643,7 @@ Denoting $\sigma$ the sigmoïd function:
 
 For all $i \in [1, K]$: 
 \begin{align}
-	P(y_i | \mathbf{x}) &= \frac{1}{1 + e^{[B.A.\mathbf{x}]_i}}\\
+	P(y_i | \mathbf{x}) &= \frac{1}{1 + [e^{B.A.\mathbf{x}}]_i}\\
 		\text{      with } &[z]_i \text{ meaning the i-th element of a vector}
 \end{align}
 
@@ -680,22 +697,22 @@ Let's introduce some more notations that will help to compute gradients.
 	= A\mathbf{x}
 \end{align}
 
-With:
+Ie:
 \begin{align}
-	h_j = A^{(j)}\mathbf{x}
+	h_j = A_{j, .}\mathbf{x} = \sum_{i=1}^{\textit{|V|}} A_{j,i} x_i 
 \end{align}
 
 
 Let's denote:
 
 \begin{align}
-	s_k  = B^{(k)} \mathbf{h} = \sum_{j=1}^{\textit{dim}} B^{(k)}_j h_j 
+	s_k  = B_{k,.} \mathbf{h} = \sum_{j=1}^{\textit{dim}} B_{k,j} h_j 
 \end{align}
 
 we can then express $\hat y$ as, $\forall k \in [1, K]$:
 
 \begin{align}
-	\hat y_k  = \sigma(s_k) = \sigma( \sum_{j=1}^{d} B^{(k)}_j h_j) 
+	\hat y_k  = \sigma(s_k) = \sigma( \sum_{j=1}^{dim} B_{k, j} h_j) 
 \end{align}
 
 
@@ -736,11 +753,11 @@ The gradient are:
 
 
 \begin{align}
-	\frac{\partial E}{\partial B_i^{(k)}} 
+	\frac{\partial E}{\partial B_{k, j}} 
 	= 
-	\frac{\partial E}{\partial s_k} \cdot \frac{\partial s_k}{\partial B_i^{(k)}} 
+	\frac{\partial E}{\partial s_k} \cdot \frac{\partial s_k}{\partial B_{k, j}} 
 	= 
-	h_i (\hat y_k - y_k)
+	h_j (\hat y_k - y_k)
 \end{align}
 
 
@@ -750,16 +767,16 @@ Trick: derivate $E$ in regard to $s_k$:
 	&= 
 	\sum_{k=1}^K \frac{\partial E}{\partial s_k} \cdot \frac{\partial s_k}{\partial h_j} \\
 	&= 
-	\sum_{k=1}^K B_j^{(k)} (\hat y_k - y_k)
+	\sum_{k=1}^K B_{k, j} (\hat y_k - y_k)
 \end{align}
 
 
 \begin{align}
-	\frac{\partial E}{\partial A_i^{(j)}} 
+	\frac{\partial E}{\partial A_{j,i}} 
 	&= 
-	\frac{\partial E}{\partial h_j} \cdot \frac{\partial h_j}{\partial A_i^{(j)}} \\
+	\frac{\partial E}{\partial h_j} \cdot \frac{\partial h_j}{\partial A_{j, i}} \\
 	&= 
-	x_i \sum_{k=1}^K B_j^{(k)} (\hat y_k - y_k)
+	x_i \sum_{k=1}^K B_{k, j} (\hat y_k - y_k)
 \end{align}
 
 
@@ -768,14 +785,14 @@ Trick: derivate $E$ in regard to $s_k$:
 At each sample $(\mathbf{x}, \mathbf{y})$, given a learning rate $\mu$, we update weights as follow:
 
 \begin{align}
-	B_i^{(k)\mbox{new}} \leftarrow B_i^{(k)\mbox{old}} - \mu (h_i (\hat y_k - y_k))
+	B_{k, j}^{\mbox{new}} \leftarrow B_{k,j}^{\mbox{old}} - \mu (h_j (\hat y_k - y_k))
 \end{align}
 
 \begin{align}
-	A_i^{(j)\mbox{new}} \leftarrow A_i^{(j)\mbox{old}} - 
+	A_{j,i}^{\mbox{new}} \leftarrow A_{j,i}^{\mbox{old}} - 
 	\mu 
 	\left(
-		x_i \sum_{k=1}^K B_j^{(k)\mbox{new}} (\hat y_k - y_k) 
+		x_i \sum_{k=1}^K B_{k,j}^{\mbox{new}} (\hat y_k - y_k) 
 	\right)
 \end{align}
 
@@ -855,7 +872,7 @@ In our case we did not discriminate classes while learning isotonic regression t
 \end{figure}
 
 
-\subsection{Decision: precision versus recall}
+\subsection{Decision: should we favor precision or recall}
 
 \begin{figure}[H]
 \centering
@@ -877,6 +894,64 @@ Given a decision threshold we will either favor recall or precision, each of the
 
 The choice is a business choice, depending on what users favor. In our case, after some user interviews, it is clear that we prefer to favor precision. Users are frightened by wrong suggestions. Whereas the absence of suggestion has no negative impact.
 
+\subsection{Decision: implemented strategy to provide maximum of suggestions with minimum risk of error}
+
+For now, at least, given we don't want any wrong suggestion to be sent to our users, we decided to validate manually every single suggestion.
+
+Concretely we: 
+\begin{itemize}
+	\item compute predictions scores,
+	\item calibrate them,
+	\item index all predictions with calibrated score above 0.05 in our validation dashboard
+	\item have the ability to filter predictions by many characteristics among which their calibrated score
+\end{itemize}
+
+The challenge is then, how can we make it as easy and fast as possible to accurately validate suggestions?
+
+In all cases we filter suggestions whose status is pending (not yet validated/refused), and whose predicted value does not match what is currently in our product database (for instance if we predict that a product contains gluten, but gluten is not present in the allergens field).
+
+Multiple scenarii are then possible:
+
+\textbf{Quick validation of suggestions with best scores / number of sources.}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.50]{./images/calibration/easy-validation.png}
+\caption{Filters: high calibrated probability, and mutiple sources.}
+\end{figure}
+
+This configuration will allow us to know that most of these suggestions have a very high probability of being true. 
+
+In this configuration:
+\begin{itemize}
+	\item we quickly validate lots of suggestions: leading to many suggestions for our users (high business impact)
+	\item we miss a lot of positives (high precision but low recall)
+	\item we don't bring much information to our models (the classifier already perform well on these items)
+\end{itemize}
+
+
+\textbf{Validation through textual search.}
+
+We filter suggestions, based on a textual search, and manually add some attributes. This can be useful when we want to bootstrap classes that are not enough completed in our database, and for which the classifier performs badly.
+
+For instance, for the field flavors that we recently introduced in our workflow, some flavors don't have enough positive samples. 
+We can search for the term 'lemon' in our products attributes (description, name etc), and if it is relevant add 'lemon' as flavor attribute.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.30]{./images/calibration/textual-validation.png}
+\caption{Textual validation based on word 'citron', our classifier performs badly for now (probabilities are low whereas there is actually some lemon), but will improve with the new provided information.}
+\label{fig:textualvalidation}
+\end{figure}
+
+
+In this configuration:
+\begin{itemize}
+	\item validation is usually quite slow
+	\item but we bring a lot of information to our models (we bring it information to better classify new attributes or classes), with this new information next predictions will be better
+\end{itemize}
+
+
 \section{Missing labels}
 
 \subsection{Strategies to handle incompletely labeled data}
@@ -896,10 +971,10 @@ To overcome this challenge we adopted the following strategy:
 		\item either categorical search: we know that all alcohols should have a 'pregnant warning pictogram'
 		\item either by filtering predictions with the highest precision estimation
 	\end{itemize}
-	\item validated attributes predictions are stored in a database and override product attributes in classification workflow
+	\item validated attributes predictions are stored in a database and override product attributes in classification workflow, and thus modify the training set
 \end{itemize}
 
-In the following graphs, you can see that after a initial prediction of flavors attributes, we could detect with high degree a confidence some flavors attributes that were not labeled. After manually validating them, they were incorporated in the learning data-set and increased the training-support for each class. This improved data-quality led to a raise in flavors scores.
+In the following graphs, you can see that after an initial prediction of flavors attributes, we could detect with high degree a confidence some flavors attributes that were not labeled. After manually validating them, they were incorporated in the learning data-set and increased the training-support for each class. This improved data-quality led to a raise in flavors scores.
 
 \begin{figure}[H]
 \centering
@@ -931,22 +1006,22 @@ When we use our predictions with best precision estimation to validate quickly, 
 \caption{Virtuous validation workflow.}
 \end{figure}
 
-Inherently, when training a classifier to detect cases where our data is invalid on some samples, we generally put a stronger focus on precision rather than recall. Indeed:
-\begin{itemize}
-	\item in multilabel case, our invalid data is in nearly all cases missing values: which will lead to negatives instead of positives in our dataset.
-	\item in case we predict a sample as positive for a given class, unfortunatly we will count it as a false positive instead of a true positive.
-	\item thus it will impact recall, not precision.
-\end{itemize}
+Inherently, when training a classifier to detect cases where our data is invalid on some samples in a multilabel context, we generally put a stronger focus on recall metric rather than precision. Indeed precision will be more degraded by mislabeled data than recall (our invalid data is in nearly all cases missing values: which will lead to positives mislabeled as negatives in our dataset).
 
 \subsection{Iterative approach to bootstrap new classes}
 
 It is sometimes necessary to adopt a pro-active approach on some classes with low scores or very low number of occurences. 
-For instance, when we split a 'kind' (category) in multiple more detailed kinds.
-After some iterations, there might be enough occurences to ensure sufficient scores.
+For instance, when we create a new class (a new category, or a new flavor..).
+
+In this case we try to manually annotate products so that enough samples are present for the classifier to be effective. After some iterations, there might be enough occurences to ensure sufficient scores.
+
+This approach of is detailed here \ref{fig:textualvalidation}.
+
+To effectively and quickly improve our models, we consider hiring someone to carry out this task. 
 
 \section{Evaluate results}
 
-Are we satisfied of our performances, could we do better or not given the task difficulty? Even though we will detail in next section the fields we want to investigate further to improve our models, these are difficult questions for which our answers cannot be definitive.
+Are we satisfied with our performances, could we do better or not given the task difficulty? Even though we will detail in next section the fields we want to investigate further to improve our models, these are difficult questions for which our answers cannot be definitive.
 
 \subsection{Assess task difficulty}
 Task difficulty can be assessed differently for each predicted field. It is dependent on multiple factors:
@@ -1018,6 +1093,7 @@ As a reminder:
  	\item in our case given the disparity of size classes we will generally consider micro rather than macro score.
  	\item macro scores are very impacted by the fact that many classes have very few occurences and perform badly
  	\item it is difficult to evaluate how much the errors are due to a wrongly qualified classifier, versus due to uncompletely labeled data. Indeed for a given decision threshold recall scores might be underestimated
+ 	\item even with low scores, our predictions might help us quickly find many data-inconsistencies 
 \end{itemize}
 
 
@@ -1053,19 +1129,69 @@ This similarity function could be used as a coefficient in the cost function:
 	\item if we predict 'bread' instead of 'water', the cost would be raised because the prediction is completely wrong
 \end{itemize}
 
+\subsection{Entity recognition to predict some fields}
+Some attributes are usually present in description (brand, packaging etc). These element might be detectable through entity recognition methods.
+
 \subsection{Use images as input}
 
-For now, use of google vision API to product text: labels, reading. 
+Manufacturers must provide pictures of their products. In many cases, it is possible to 'read' what is written on the packaging.
 
-This extracted features could be used in our workflow, but we might also change our model to some neural networks embedding different types of objects. Facebook recently released a library to embbed different types of objects \cite[starspace]{wu2017starspace}.
+There are different approaches on how to use it:
+\begin{itemize}
+	\item a model would be used to read what is written on the packaging, and the output would be incorporated as a feature in other processes (classification or entity recognition)
+	\item we might also change our model to some neural networks embedding different types of objects, text and images. In this vein, Facebook recently released a library to embbed different types of objects \cite[starspace]{wu2017starspace}.
+\end{itemize}
 
-
-\subsection{Part of Speech Tagging strategies to predict some fields}
-Some attributes are usually present in description (brand, packaging etc). These element might be detectable through part of speech tagging methods.
+We could then imagine in the future a user upload some pictures of his product, to prefill some fields of the product form.
 
 \subsection{Tuning strategies}
 
+
+Our workflow contained a very large space of parameters including:
+\begin{itemize}
+	\item how text is preprocessed: stemming or not, stop-words, encoding, special characters etc
+	\item fasttext 'dictionnary' parameters: dimension of word vectors, word-ngrams, character n-grams, min number of word occurence
+	\item fasttext use of vectors pretrained on a corpus of text: if yes which text, with which algorithm (CBOW, Skip-Gram?) and with which parameters
+	\item fasttext other training parameters: number of epochs, loss function, min number of labels occurence, learning rate
+	\item decision parameters: calibration or decision strategy
+\end{itemize}
+
 For now tuning was done quite intuitively, but given the very large size of parameters space we have room for improvement.
+
+The space being too big to tackle it with a grid search method, we tried some other methods.
+
+\subsubsection{Random search: difficulty to interpret results and extract correlations}
+
+The problem of random search with so many parameters involved (some categorical variables, and other numerical variables) is that, even after hundreds (even a thousand) of iterations it is very difficult to interpret results.
+
+Indeed there are nearly always many parameters changing from one sample to the other. This approach led to obtain a dataset of more than 1000 rows containing parameters, with related scores. An attempt to train regressors using parameters values as features, and scores as target led to poor results. 
+
+\subsubsection{All parameters fixed except one: only one parameter changing}
+Even if this approach is quite poor and doesn't allow to analyze parameters interactions, it has the advantage of being easily interpretable, and plotted.
+It helps determine some rule of thumb limits for some parameters.
+
+
+\subsubsection{All parameters fixed except some intuitively related parameters}
+Some parameters have strong influence on others: for instance the learning rate should be analyzed in concordance with the number of epochs.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{./images/tuning/tuning-lr-epoch.png}
+\caption{Micro f1 score in regard to product of learning rate and number of epochs}
+\end{figure}
+
+\subsubsection{What next: rigorous process and bayesian optimization}
+
+Some errors made results uncertain:
+\begin{itemize}
+\item changing input data preprocessing without saving which operations were made in results (stemmed input or not, which version of dataset was extracted, stopword version etc..): the input data-set was thus not the same for all iterations.
+\item implementation errors that led to null (0 f1\_score) results.
+\item initial parameters windows wrongly defined
+\end{itemize}
+
+Next iterations should be more precisely defined.
+
+Plus, we might consider using more advanded automated hyperparameters learning strategies, for instance some approaches consider this problem through the framework of Bayesian optimization, in which a learning algorithm’s generalization performance is modeled as a sample from a Gaussian process \cite{Tuning}.
 
 \subsection{Higher order multilabel strategies}
 Possible strategies include:
