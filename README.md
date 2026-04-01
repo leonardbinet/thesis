@@ -2,6 +2,8 @@
 
 Professional thesis — Telecom ParisTech Post-Master's Degree (BGD), 2018.
 
+[Read the thesis (PDF)](submitted_thesis.pdf)
+
 ## Prerequisites
 
 - [TeX Live](https://tug.org/texlive/) (2025 or later)
