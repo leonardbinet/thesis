@@ -1,7 +1,7 @@
 TEX = pdflatex -shell-escape
 BIB = bibtex
 SRC = rapport
-OUT = report.pdf
+OUT = submitted_thesis.pdf
 
 .PHONY: all clean
 

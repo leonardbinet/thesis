@@ -47,7 +47,7 @@ Generate the PDF:
 make
 ```
 
-This runs `pdflatex` and `bibtex` to produce `report.pdf`.
+This runs `pdflatex` and `bibtex` to produce `submitted_thesis.pdf`.
 
 ## Clean
 

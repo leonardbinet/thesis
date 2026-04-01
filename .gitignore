@@ -27,6 +27,7 @@ _minted*/
 # Output PDF (rebuilt via `make`)
 *.pdf
 !images/**/*.pdf
+!submitted_thesis.pdf
 
 # Backup files
 *.tex~
